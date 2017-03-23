@@ -1,3 +1,20 @@
-# Contributing
+﻿<p align="center">
+  <img src="relay.png" alt="Microsoft Azure Relay" width="100"/>
+</p>
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+# Microsoft Azure Relay
+
+To learn more about Azure Relay, please visit our [marketing page](https://azure.microsoft.com/services/service-bus/).
+
+This repository is intended to be used for the following:
+* Service side issues and feature requests
+* Samples
+* Documentation issues
+
+If you are looking for a specific client library, see the following:
+* [.NET](https://github.com/azure/azure-relay-dotnet)
+* [.Node](https://github.com/azure/azure-relay-node)
+
+## How to provide feedback
+
+See our [Contribution Guidelines](./.github/CONTRIBUTING.md).
