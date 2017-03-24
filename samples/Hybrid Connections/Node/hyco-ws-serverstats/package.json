@@ -1,0 +1,19 @@
+{
+  "author": "",
+  "name": "serverstats",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Azure/azure-relay-node.git"
+  },
+  "engines": {
+    "node": ">0.4.0"
+  },
+  "dependencies": {
+    "hyco-ws": "latest",
+    "express": "4.x",
+    "mustache-express" : "latest"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {}
+}

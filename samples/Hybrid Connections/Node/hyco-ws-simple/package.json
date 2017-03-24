@@ -1,0 +1,14 @@
+{
+  "author": "",
+  "name": "simple-externalpkg",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Azure/azure-relay-node.git"
+  },
+  "dependencies": {
+    "hyco-ws": "latest"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {}
+}
