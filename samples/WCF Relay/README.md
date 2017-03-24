@@ -79,7 +79,7 @@ in tightly managed network environments
 * **RelayListener** - The [RelayListener](RelayListener) sample provides a simple stream abstraction for the Relay, echoing the System.Net.TcpListener/TcpClient classes
 from the .NET framework. No WCF experience required. 
 
-##Other TCP Samples
+## Other TCP Samples
 * **RelayTcpStream** - The [RelayTcpStream](RelayTcpStream) sample shows how to wrap any System.IO.Stream with a service endpoint, 
 how to create a System.IO.Stream proxy on the client side, and how to run an end-to-end streamed communication link through the Relay.
 * **RelayTcpHybrid** - The [RelayTcpHybrid](RelayTcpHybrid) sample shows how to use the Hybrid connection mode, which starts with a connection through the
