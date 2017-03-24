@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Bond.Compiler.CSharp.5.0.0\build\net45\Bond.Compiler.CSharp.props" Condition="Exists('..\packages\Bond.Compiler.CSharp.5.0.0\build\net45\Bond.Compiler.CSharp.props')" />
+  <Import Project="..\packages\Bond.CSharp.5.0.0\build\Bond.CSharp.props" Condition="Exists('..\packages\Bond.CSharp.5.0.0\build\Bond.CSharp.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <ProjectGuid>{12279366-F646-4FEC-8CAA-B62A8EC477BB}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>notifyevent</RootNamespace>
+    <AssemblyName>notifyevent</AssemblyName>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Bond, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bond.Core.CSharp.5.0.0\lib\net45\Bond.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Bond.Attributes, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bond.Core.CSharp.5.0.0\lib\net45\Bond.Attributes.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Bond.Comm.Epoxy, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bond.Comm.Epoxy.CSharp.0.8.0\lib\net45\Bond.Comm.Epoxy.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Bond.Comm.Interfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bond.Comm.Runtime.CSharp.0.8.0\lib\portable-net45+wp80+win8+wpa81+dnxcore50\Bond.Comm.Interfaces.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Bond.Comm.Layers, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bond.Comm.Runtime.CSharp.0.8.0\lib\portable-net45+wp80+win8+wpa81+dnxcore50\Bond.Comm.Layers.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Bond.Comm.Service, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bond.Comm.Runtime.CSharp.0.8.0\lib\portable-net45+wp80+win8+wpa81+dnxcore50\Bond.Comm.Service.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Bond.IO, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bond.Core.CSharp.5.0.0\lib\net45\Bond.IO.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Bond.JSON, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bond.Runtime.CSharp.5.0.0\lib\net45\Bond.JSON.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Azure.Relay">
+      <HintPath>..\..\..\lib\Microsoft.Azure.Relay.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ConsoleLogger.cs" />
+    <Compile Include="NotifyEvent.cs" />
+    <Compile Include="NotifyEventService.cs" />
+    <BondCodegen Include="notify.bond" />
+    <!-- Resharper Workaround -->
+    <Compile Include="$(IntermediateOutputPath)\notify_types.cs" Condition="False" />
+    <!-- End Resharper Workaround -->
+    <!-- TODO: edit the .targets to automatically include the comm files -->
+    <Compile Include="$(IntermediateOutputPath)\notify_interfaces.cs" />
+    <Compile Include="$(IntermediateOutputPath)\notify_proxies.cs" />
+    <Compile Include="$(IntermediateOutputPath)\notify_services.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Relay.Bond.Epoxy\Relay.Bond.Epoxy.csproj">
+      <Project>{d906695a-4878-4eb0-b163-f7eacd796047}</Project>
+      <Name>Relay.Bond.Epoxy</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Bond.CSharp.5.0.0\build\Bond.CSharp.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Bond.CSharp.5.0.0\build\Bond.CSharp.props'))" />
+    <Error Condition="!Exists('..\packages\Bond.CSharp.5.0.0\build\Bond.CSharp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Bond.CSharp.5.0.0\build\Bond.CSharp.targets'))" />
+    <Error Condition="!Exists('..\packages\Bond.Compiler.CSharp.5.0.0\build\net45\Bond.Compiler.CSharp.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Bond.Compiler.CSharp.5.0.0\build\net45\Bond.Compiler.CSharp.props'))" />
+    <Error Condition="!Exists('..\packages\Bond.Compiler.CSharp.5.0.0\build\net45\Bond.Compiler.CSharp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Bond.Compiler.CSharp.5.0.0\build\net45\Bond.Compiler.CSharp.targets'))" />
+  </Target>
+  <Import Project="..\packages\Bond.CSharp.5.0.0\build\Bond.CSharp.targets" Condition="Exists('..\packages\Bond.CSharp.5.0.0\build\Bond.CSharp.targets')" />
+  <Import Project="..\packages\Bond.Compiler.CSharp.5.0.0\build\net45\Bond.Compiler.CSharp.targets" Condition="Exists('..\packages\Bond.Compiler.CSharp.5.0.0\build\net45\Bond.Compiler.CSharp.targets')" />
+</Project>
