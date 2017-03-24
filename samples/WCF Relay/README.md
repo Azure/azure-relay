@@ -98,10 +98,10 @@ sample set.
 the Service Bus Relay has been turned off and that allows unauthenticated requests to pass through the Relay. This enables any client, including
 browser clients, to transparently interact with the HTTP service without having to present a Relay access token.
 
-##WCF SOAP Web Services Samples
+## WCF SOAP Web Services Samples
 * **RelayWSHttpSimple** - The [RelayWSHttpSimple](RelayWSHttpSimple) sample shows a WCF HTTP Web Service exposed through the Relay
 * **RelayWSMetadataExchange** - The [RelayWSMetadataExchange](RelayWSMetadataExchange) sample shows how to expose MEX endpoints through the Relay
 
-##General Samples
+## General Samples
 *  **RelayConnnectionStatus** - The [RelayConnectionStatus](RelayConnectionStatus) sample shows how to monitor the status of a Relay listener 
 when network failures occur, and how to manage opening the listener host should there be no network connectivity at startup time. 
