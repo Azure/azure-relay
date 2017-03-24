@@ -1,5 +1,5 @@
 //  
-//  Copyright © Microsoft Corporation, All Rights Reserved
+//  Copyright Â© Microsoft Corporation, All Rights Reserved
 // 
 //  Licensed under the Apache License, Version 2.0 (the "License"); 
 //  you may not use this file except in compliance with the License. 
@@ -102,12 +102,13 @@ namespace RelaySamples
             }
 
             // get overrides from the environment
-            foreach (var prop in properties)
+            var keys = new List<string>(properties.Keys);
+            foreach (var key in keys)
             {
-                var env = Environment.GetEnvironmentVariable(prop.Key);
+                var env = Environment.GetEnvironmentVariable(key);
                 if (env != null)
                 {
-                    properties[prop.Key] = env;
+                    properties[key] = env;
                 }
             }
 
