@@ -1,6 +1,6 @@
-# 'Simple' Hybrid Connection Sample 
+# 'Simple' WebSocket Hybrid Connection Sample 
 
-This sample shows how to use the Hybrid Connections API from C#.
+This sample shows how to use the Hybrid Connections API for WebSockets from C#.
 
 It consists of a simple command line client and a simple command line server
 app. Both applications take the same set of input arguments to launch.

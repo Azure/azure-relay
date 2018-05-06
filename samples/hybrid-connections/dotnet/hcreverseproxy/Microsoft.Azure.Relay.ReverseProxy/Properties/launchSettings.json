@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "HCReverseProxy": {
+      "commandName": "Project",
+      "commandLineArgs": "Endpoint=sb://contoso.servicebus.windows.net/;SharedAccessKeyName=ListenKey;SharedAccessKey=XXXX;EntityPath=forwarder http://localhost:8089/api"
+    }
+  }
+}

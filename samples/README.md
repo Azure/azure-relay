@@ -1,11 +1,23 @@
 # Azure Relay samples
 
-This folder contains samples that demonstrate the following Azure Relay features. See the readme files within each sample folder for more details. The following feature areas are covered:
+This folder contains samples that demonstrate the features of Azure Relay. See
+the readme files within each sample folder for details. The following feature
+areas are covered:
 
 ## Hybrid Connections
 
-Contains samples that demonstrate various Hybrid Connections scenarios, in both [Node.js](https://github.com/Azure/azure-relay/blob/master/samples/Hybrid%20Connections/Node/README.md) and [.NET](https://github.com/Azure/azure-relay/blob/master/samples/Hybrid%20Connections/DotNet/README.md).
+The [hybrid-connections](./hybrid-connections) folder contains samples that
+demonstrate the WebSocket and HTTP features of the open-protocol Hybrid
+Connections feature set.
+
+There are [Node.js](hybrid-connections/node/README.md) and
+[.NET](hybrid-connections/dotnet/README.md) samples, with further languages
+forthcoming.
 
 ## WCF Relay
 
-Contains a set of samples that demonstrate WCF Relay functionality. There is a [readme.md file](https://github.com/Azure/azure-relay/blob/master/samples/WCF%20Relay/README.md) within the WCF Relay folder that provides complete details on building and running the samples.
+The [wcf-relay](./wcf-relay) folder contains a set of samples that demonstrate
+the features of the Windows Communication Foundation (WCF) Relay. The
+[readme.md file](wcf-relay/README.md) within the WCF Relay explains how to
+build and run the samples. The WCF Relay features are only available for
+the full .NET Framework on Windows, which they depend on.
