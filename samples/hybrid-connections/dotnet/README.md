@@ -18,6 +18,6 @@ socket connections across the Relay, including SQL Server and Remote Deskop Conn
 
 - [**Simple HTTP**](./simple-http/README.md) - The Simple HTTP sample illustrates the basic 
 functions of the HTTP API and shows how to handle a simple HTTP request
-- [**Reverse Proxy**](/hcreverseproxy/README.md) - The Reverse Proxy sample shows how to 
+- [**Reverse Proxy**](./hcreverseproxy/README.md) - The Reverse Proxy sample shows how to 
 build a simple reverse proxy that allows exposing existing web sites and services through
 the Relay.
