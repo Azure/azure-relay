@@ -1,60 +1,76 @@
 # Azure Relay WCF Relay Samples
 
-This repository contains the official set of samples for the Azure Relay service. 
+This repository contains the official set of samples for the WCF features 
+of the Azure Relay service.
 
-Fork and play!
+The *Azure Relay* is a service that helps creating secured, publicly
+discoverable, and reachable endpoints for privately hosted services that reside
+behind network address translation boundaries and/or are shielded by firewalls.
 
-The *Azure Relay* is a service that helps creating secured, publicly discoverable and reachable endpoints for 
-privately hosted services that reside behind network address translation boundaries and/or are shielded by
-firewalls. 
+In other words, you can host a publicly accessible service endpoint from nearly
+any Windows computer that can connect to the Internet.
 
-In other words, you can host a publicly accessible service endpoint from nearly any Windows computer 
-that can connect to the Internet. 
-
-The Relay service client automatically tunnels through proxies, and will automatically 
-leverage the [WebSocket protocol](https://tools.ietf.org/html/rfc6455) when and if required.  
+The Relay service client automatically tunnels through proxies, and will
+automatically leverage the [WebSocket
+protocol](https://tools.ietf.org/html/rfc6455) when and if necessary.
 
 The Relay offers two protocol options:
 * **HTTP** - HTTP services are the most interoperable option and allow accessing such relayed services from
     any platform. HTTP services can be plain REST-style services, or can use the full range of SOAP/WS-* 
 	capabilities of WCF, including message-level end-to-end message protection and authentication.   
 * **TCP** - TCP (or "net.tcp") services use a .NET specific, bi-directional, connection-oriented protocol
-    that is significantly more efficient than HTTP, and specifically so with the Azure Service Bus Relay. Unless
+    that is more efficient than HTTP, and specifically so with the Azure Service Bus Relay. Unless
 	interoperability with non-.NET clients is an immediate concern, applications should prefer this option.
 	It's possible to host multiple concurrent endpoints for the same service to provide an optimal choice for
 	.NET clients and other clients at the same time.   
 
-The ability to create listeners is currently limited to clients running the full .NET Framework (4.5+) on 
-supported Windows client (Windows 7+) and Windows Server (Windows Server 2012+) operating systems since
-the listener infrastructure is integrated with and leverages the Windows Communication Foundation (WCF).
+The ability to create listeners is currently limited to clients running the
+full .NET Framework (4.5+) on supported Windows client (Windows 7+) and Windows
+Server (Windows Server 2012+) operating systems since the listener
+infrastructure is integrated with and leverages the Windows Communication
+Foundation (WCF).
 
-As the samples will show you, many core Relay scenarios do not require much, if any, prior experience with creating WCF 
-services or dealing with the occasionally scary depths of WCF configuration files.       
+As the samples will show you, many core Relay scenarios do not require much, if
+any, prior experience with creating WCF services or dealing with the
+occasionally scary depths of WCF configuration files.
 
 ## Requirements and Setup
 
-These samples run against the cloud service and require that you have an active Azure subscription available 
-for use. If you do not have a subscription, [sign up for a free trial](https://azure.microsoft.com/pricing/free-trial/), 
-which will give you **ample** credit to experiment with the Relay. 
-  
-Most Relay samples, except for the ones in the *RelayClients* folder, assume that you are running on a supported 
-Windows version and have a .NET Framework 4.5+ build environment available. [Visual Studio 2015](https://www.visualstudio.com/) is recommended to 
-explore the samples; the free community edition will work just fine.    
+These samples run against the cloud service and require that you have an active
+Azure subscription available for use. If you do not have a subscription, [sign
+up for a free trial](https://azure.microsoft.com/pricing/free-trial/), which
+will give you **ample** credit to experiment with the Relay.
 
-To run the samples, you must perform a few setup steps, including creating and configuring a Service Bus Namespace. 
-For the required [setup.ps1](setup.ps1) and [cleanup.ps1](cleanup.ps1) scripts, **you must have Azure Powershell installed** 
-([if you don't here's how](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/)) and 
-run these scripts from the Azure Powershell environment.
+Most Relay samples, except for the ones in the *RelayClients* folder, assume
+that you are running on a supported Windows version and have a .NET Framework
+4.5+ build environment available. [Visual Studio
+2015](https://www.visualstudio.com/) is recommended to explore the samples; the
+free community edition will work fine.
 
-### Setup      
-The [setup.ps1](setup.ps1) script will either use the account and subscription you have previously configured for your Azure Powershell environment
-or prompt you to log in and, if you have multiple subscriptions associated wiuth your account, select a subscription. 
+To run the samples, you must perform a few setup steps, including creating and
+configuring a Service Bus Namespace. For the required [setup.ps1](setup.ps1)
+and [cleanup.ps1](cleanup.ps1) scripts, **you must have Azure Powershell
+installed** ([if you don't here's
+how](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/))
+and run these scripts from the Azure Powershell environment.
 
-The script will then create a new Azure Service Bus Namespace for running the samples and configure it with shared access signature (SAS) rules
-granting send, listen, and management access to the new namespace. The configuration settings are stored in the file "azure-relay-config.properties", 
-which is placed into the user profile directory on your machine. All samples use the same [entry-point boilerplate code](common/Main.cs) that 
-retrieves the settings from this file and then launches the sample code. The upside of this approach is that you will never have live credentials 
-left in configuration files or in code that you might accidentally check in when you fork this repository and experiment with it.   
+### Setup
+
+The [setup.ps1](setup.ps1) script will either use the account and subscription
+you have previously configured for your Azure Powershell environment or prompt
+you to log in and, if you have multiple subscriptions associated with your
+account, select a subscription.
+
+The script will then create a new Azure Service Bus Namespace for running the
+samples and configure it with shared access signature (SAS) rules granting
+send, listen, and management access to the new namespace. The configuration
+settings are stored in the file "azure-relay-config.properties", which is
+placed into the user profile directory on your machine. All samples use the
+same [entry-point boilerplate code](common/Main.cs) that retrieves the settings
+from this file and then launches the sample code. The upside of this approach
+is that you will never have live credentials left in configuration files or in
+code that you might accidentally check in when you fork this repository and
+experiment with it.
 
 ### Cleanup
 
@@ -63,13 +79,17 @@ your user profile directory.
  
 ## Common Considerations
 
-Most samples use shared [entry-point boilerplate code](common/Main.cs) that loads the configuration and then launches the sample's 
-**Program.Run()** instance methods. 
+Most samples use shared [entry-point boilerplate code](common/Main.cs) that
+loads the configuration and then launches the sample's **Program.Run()**
+instance methods.
 
-Except for the samples that explicitly demonstrate security capabilities, all samples are invoked with an externally issued SAS token 
-rather than a connection string or a raw SAS key. The security model design of Service Bus generally prefers clients to handle tokens 
-rather than keys, because tokens can be constrained to a particular scope and can be issued to expire at a certain time. 
-More about SAS and tokens can be found [here](https://azure.microsoft.com/documentation/articles/service-bus-shared-access-signature-authentication/).               
+Except for the samples that explicitly demonstrate security capabilities, all
+samples are invoked with an externally issued SAS token rather than a
+connection string or a raw SAS key. The security model design of Service Bus
+generally prefers clients to handle tokens rather than keys, because tokens can
+be constrained to a particular scope and can be issued to expire at a certain
+time. More about SAS and tokens can be found
+[here](https://azure.microsoft.com/documentation/articles/service-bus-shared-access-signature-authentication/).
 
 ## TCP Introduction Samples
 

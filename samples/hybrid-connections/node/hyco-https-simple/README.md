@@ -14,7 +14,7 @@ HTTPS requests via a public endpoint.
 ## Code
 
  If you are familiar with the regular 'https' module, you will find the code
- below just as familiar. Request and response and error handling is identical.
+ below as familiar. Request and response and error handling is identical.
 
 ``` js
 
@@ -58,8 +58,7 @@ since the listener management is largely delegated to the Relay service.
 
 Constructor arguments:
 
-- **server** (required) - the fully qualified URI for a Hybrid Connection name on which to listen, usually
-                          constructed with the https.createRelayListenUri() helper.
+- **server** (required) - the fully qualified URI for a Hybrid Connection name on which to listen, constructed with the https.createRelayListenUri() helper.
 - **token** (required) - this argument *either* holds a previously issued token string *or* a callback
                          function that can be called to obtain such a token string. The callback option
                          is preferred as it allows token renewal.
@@ -72,7 +71,7 @@ for that path:
 
 `node listener.js --ns=myns.servicebus.windows.net --path=mypath --keyrule=listenrule --key=[base64 key]`
 
-On a client, run `sender.js` specifying namespace and path of an Azure Relay Hybid Connection with
+On a client, run `sender.js` specifying namespace and path of an Azure Relay Hybrid Connection with
 an active listener, along with a SAS rule name and a key that grants "Send" permission:
 
 `node sender.js --ns=myns.servicebus.windows.net --path=mypath --keyrule=sendrule --key=[base64 key]`
@@ -88,5 +87,5 @@ You can use this sample to explore the "load balancing" and recovery capabilitie
 If you start multiple concurrent listeners on the same name, you will see that subsequent 
 runs of the sender will be distributed across all connected listeners. You can have up to 
 25 listeners concurrently listening on one name. If a listener is dropped (close it), you'll 
-find the client that had an open connection to that listener promptly failing and a 
+find the client that had an open connection to that listener promptly failing and any 
 reconnect will be directed to one of the remaining listeners. 

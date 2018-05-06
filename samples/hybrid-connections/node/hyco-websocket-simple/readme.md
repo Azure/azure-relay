@@ -12,7 +12,7 @@ for that path:
 
 `node listener.js myns.servicebus.windows.net mypath listenrule [base64 key]`
 
-On a client, run `sender.js` specifying namespace and path of an Azure Relay Hybid Connection with
+On a client, run `sender.js` specifying namespace and path of an Azure Relay Hybrid Connection with
 an active listener, along with a SAS rule name and a key that grants "Send" permission:
 
 `node sender.js myns.servicebus.windows.net mypath sendrule [base64 key]`
