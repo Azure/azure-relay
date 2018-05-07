@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\build\common.props" />
+
+  <PropertyGroup>
+    <TargetFrameworks>$(StandardTestTfms)</TargetFrameworks>
+    <AssemblyName>Microsoft.Azure.Relay.AspNetCore.FunctionalTests</AssemblyName>
+    <RootNamespace>Microsoft.Azure.Relay.AspNetCore.FunctionalTests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Microsoft.AspNetCore.Server.AzureRelay\Microsoft.Azure.Relay.AspNetCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Testing" Version="$(MicrosoftAspNetCoreTestingPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Relay" Version="1.1.0-preview" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkPackageVersion)" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="$(SystemNetHttpWinHttpHandlerPackageVersion)" />
+    <PackageReference Include="xunit" Version="$(XunitPackageVersion)" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitRunnerVisualStudioPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\launchSettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
