@@ -26,12 +26,12 @@ for that path:
 
 `node server.js myns.servicebus.windows.net mypath listenrule [base64 key]`
 
-On a client, run `connect.js` specifying namespace and path of an Azure Relay Hybid Connection with
+On a client, run `connect.js` specifying namespace and path of an Azure Relay Hybrid Connection with
 an active listener, along with a SAS rule name and a key that grants "Send" permission:
 
 `node connect.js myns.servicebus.windows.net mypath sendrule [base64 key]`
 
-You will be prompted for username/password which the server will be verified against users.txt once you
+You will be prompted for username/password, which the server will be verified against users.txt once you
 establish a connection, then you are presented with a command shell where you can create and destroy tunnels.
 
 > **Security note:**
