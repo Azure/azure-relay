@@ -1,10 +1,25 @@
 AzureRelayServer
 =================
 
-| AppVeyor | Travis |
-| ---- | ----
-| [![AppVeyor](https://ci.appveyor.com/api/projects/status/47fv9qoe862xlr25/branch/dev?svg=true)](https://ci.appveyor.com/project/aspnetci/AzureRelayServer/branch/dev) | [![Travis](https://travis-ci.org/aspnet/AzureRelayServer.svg?branch=dev)](https://travis-ci.org/aspnet/AzureRelayServer) |
+This repo contains a web server for ASP.NET Core based on Azure Relay Hybrid Connections HTTP.
 
-This repo contains a web server for ASP.NET Core based on the Windows [Http Server API](https://msdn.microsoft.com/en-us/library/windows/desktop/aa364510.aspx).
+The integration supports most ASP.NET scenarios, with a few exceptions. WebSocket support will
+be added in the near future, for instance.
 
-This project is part of ASP.NET Core. You can find samples, documentation and getting started instructions for ASP.NET Core at the [Home](https://github.com/aspnet/home) repo.
+```
+
+public static IWebHost BuildWebHost(Dictionary<string, string> settings) =>
+    new WebHostBuilder()
+        .ConfigureLogging(factory => { factory.AddConsole(); factory.AddDebug(); })
+        .UseStartup<Startup>()
+        .UseAzureRelay(options =>
+        {
+            options.UrlPrefixes.Add(
+                string.Format("https://{0}/{1}", settings["ns"], settings["path"]),
+                TokenProvider.CreateSharedAccessSignatureTokenProvider(settings["keyrule"], settings["key"]));
+        })
+        .UseContentRoot(Path.GetFullPath(@"."))
+        .UseWebRoot(Path.GetFullPath(@".\wwwroot"))
+        .Build();
+```
+
