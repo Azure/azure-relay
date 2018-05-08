@@ -21,3 +21,5 @@ functions of the HTTP API and shows how to handle a simple HTTP request
 - [**Reverse Proxy**](./hcreverseproxy/README.md) - The Reverse Proxy sample shows how to 
 build a simple reverse proxy that allows exposing existing web sites and services through
 the Relay.
+- [**ASP.NET**](./aspnet/README.md) - The ASP.NET sample is an hosting extension for 
+ASP.NET Core, allowing ASP.NET Core based sites and services to be hosted behind the Relay.

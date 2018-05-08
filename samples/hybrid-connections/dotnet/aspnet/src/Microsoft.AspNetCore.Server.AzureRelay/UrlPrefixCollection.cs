@@ -33,6 +33,11 @@ namespace Microsoft.Azure.Relay.AspNetCore
             get { return false; }
         }
 
+        public void Add(string connectionString, string path = null, TokenProvider tokenProvider = null)
+        {
+            Add(AzureRelayUrlPrefix.Create(connectionString, null));
+        }
+
         public void Add(string prefix, TokenProvider tokenProvider)
         {
             Add(AzureRelayUrlPrefix.Create(prefix, tokenProvider));

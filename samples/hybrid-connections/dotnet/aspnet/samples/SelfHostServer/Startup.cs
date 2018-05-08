@@ -10,38 +10,27 @@ using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace SelfHostServer
 {
     public class Startup
     {
-        static Dictionary<string, string> settings = new Dictionary<string, string>(){
-            {"ns" , Environment.GetEnvironmentVariable("SB_HC_NAMESPACE")},
-            {"path", Environment.GetEnvironmentVariable("SB_HC_PATH") },
-            {"keyrule", Environment.GetEnvironmentVariable("SB_HC_KEYRULE") },
-            {"key", Environment.GetEnvironmentVariable("SB_HC_KEY")}
-        };
+        static string connectionString = Environment.GetEnvironmentVariable("SB_HC_CONNECTIONSTRING");
 
         public static void Main(string[] args)
         {
-            foreach (var arg in args)
+            if ( args.Length > 0)
             {
-                var match = Regex.Match(arg, "^ --(.*?)(?:= (.*)) ?$");
-                if (match.Success)
-                {
-                    settings[match.Captures[0].Value] = match.Captures.Count > 1 ? match.Captures[1].Value : "true";
-                }
+                connectionString = args[0];
             }
 
-            if (string.IsNullOrEmpty(settings["ns"]) ||
-                string.IsNullOrEmpty(settings["path"]) ||
-                string.IsNullOrEmpty(settings["keyrule"]) ||
-                string.IsNullOrEmpty(settings["key"]))
+            if (string.IsNullOrEmpty(connectionString))
             {
-                Console.WriteLine("Required arguments:\n--ns=[namespace] --path=[path] --keyrule=[keyrule] --key=[key]");
+                Console.WriteLine($"dotnet {Path.GetFileName(typeof(Startup).Assembly.Location)} [connection string]");
                 return;
             }
-            RunAsync(settings).GetAwaiter().GetResult();
+            RunAsync(connectionString).GetAwaiter().GetResult();
         }
 
         public void ConfigureServices(IServiceCollection services)
@@ -63,16 +52,14 @@ namespace SelfHostServer
         }
 
         
-        private static async Task RunAsync(Dictionary<string, string> settings)
+        private static async Task RunAsync(string connectionString)
         {
             var host = new WebHostBuilder()
                 .ConfigureLogging(factory => factory.AddConsole())
                 .UseStartup<Startup>()
                  .UseAzureRelay(options =>
                  {
-                     options.UrlPrefixes.Add(
-                         string.Format("https://{0}/{1}", settings["ns"], settings["path"]),
-                         TokenProvider.CreateSharedAccessSignatureTokenProvider(settings["keyrule"], settings["key"]));
+                     options.UrlPrefixes.Add(connectionString);
                  })
                 .Build();
 

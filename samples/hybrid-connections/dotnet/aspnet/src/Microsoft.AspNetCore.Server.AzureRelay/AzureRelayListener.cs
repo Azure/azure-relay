@@ -113,6 +113,8 @@ namespace Microsoft.Azure.Relay.AspNetCore
                     {
                         foreach (var urlPrefix in Options.UrlPrefixes)
                         {
+                            RelayConnectionStringBuilder rcb = new RelayConnectionStringBuilder();
+                            
                             var relayListener = new HybridConnectionListener(
                                 new UriBuilder(urlPrefix.FullPrefix) { Scheme = "sb", Port = -1 }.Uri,
                                 urlPrefix.TokenProvider != null ? urlPrefix.TokenProvider : Options.TokenProvider);
