@@ -6,7 +6,7 @@ connection or local network connection as applicable to reduce latency.
 
 It is a variant of the [RelayTcp](../RelayTcp) sample, so we're only going to discuss the specific difference in this document.
 
-##Prerequisites and Setup
+## Prerequisites and Setup
 
 All samples share the same basic setup, explained in the main [README](../README.md) file. There are no extra setup steps for this sample.
 The application entry points are in [Main.cs](../common/Main.md), which is shared across all samples. The sample implementations generally 
@@ -17,7 +17,7 @@ have the .NET Build tools in the path. You can also open up the [RelayTcpHybrid.
 With either option, the NuGet package manager should download and install the **WindowsAzure.ServiceBus** package containing the 
 Microsoft.ServiceBus.dll assembly, including dependencies.     
 
-##Service
+## Service
 
 The service implementation is largely identical to the *RelayTcp* sample, except for one 
 key difference. The NettcpRelayBinding is configured differently:
