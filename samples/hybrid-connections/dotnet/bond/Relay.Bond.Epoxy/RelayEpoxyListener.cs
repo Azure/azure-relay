@@ -45,7 +45,6 @@ namespace Relay.Bond.Epoxy
             serviceHost = new ServiceHost(logger);
             connections = new HashSet<RelayEpoxyConnection>();
             shutdownTokenSource = new CancellationTokenSource();
-
             ListenEndpoint = endpoint;
         }
 
@@ -63,7 +62,7 @@ namespace Relay.Bond.Epoxy
 
         public override void AddService<T>(T service)
         {
-            logger.Site().Information("Listener on {0} adding {1}.", ListenEndpoint, typeof (T).Name);
+            logger.Site().Information("Listener on {0} adding {1}.", ListenEndpoint, typeof(T).Name);
             serviceHost.Register(service);
         }
 
@@ -101,7 +100,6 @@ namespace Relay.Bond.Epoxy
             while (!t.IsCancellationRequested)
             {
                 HybridConnectionStream connectionStream = null;
-
                 try
                 {
                     connectionStream = await listener.AcceptConnectionAsync();
@@ -142,7 +140,7 @@ namespace Relay.Bond.Epoxy
             logger.Site().Information("Shutting down connection on {0}", ListenEndpoint);
         }
 
-        void ShutdownSocketSafe(HybridConnectionStream relayEpoxyStream)
+        static void ShutdownSocketSafe(HybridConnectionStream relayEpoxyStream)
         {
             relayEpoxyStream?.Shutdown();
         }

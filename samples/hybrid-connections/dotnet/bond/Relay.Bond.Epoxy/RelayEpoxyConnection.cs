@@ -33,6 +33,7 @@ namespace Relay.Bond.Epoxy
         readonly CancellationTokenSource shutdownTokenSource;
         readonly TaskCompletionSource<bool> startTask;
         readonly TaskCompletionSource<bool> stopTask;
+        readonly AsyncLock sendLock;
         Stopwatch duration;
         Error errorDetails;
         // this member is used to capture any handshake errors
@@ -64,11 +65,11 @@ namespace Relay.Bond.Epoxy
             this.networkStream = networkStream;
 
             responseMap = new ResponseMap();
-
             state = State.Created;
             startTask = new TaskCompletionSource<bool>();
             stopTask = new TaskCompletionSource<bool>();
             shutdownTokenSource = new CancellationTokenSource();
+            sendLock = new AsyncLock();
 
             // start at -1 or 0 so the first conversation ID is 1 or 2.
             prevConversationId = (connectionType == ConnectionType.Client) ? -1 : 0;
@@ -137,7 +138,7 @@ namespace Relay.Bond.Epoxy
 
         public override string ToString()
         {
-            return $"{nameof(RelayEpoxyConnection)}";
+            return $"{nameof(RelayEpoxyConnection)}({this.connectionType})";
         }
 
         internal static Frame MessageToFrame(
@@ -396,9 +397,12 @@ namespace Relay.Bond.Epoxy
             try
             {
                 Stream stream = networkStream;
+                using (await this.sendLock.LockAsync())
+                {
+                    await frame.WriteAsync(stream);
+                    await stream.FlushAsync();
+                }
 
-                await frame.WriteAsync(stream);
-                await stream.FlushAsync();
                 return true;
             }
             catch (Exception ex) when (ex is IOException || ex is ObjectDisposedException || ex is SocketException)
@@ -600,7 +604,6 @@ namespace Relay.Bond.Epoxy
             while (!shutdownTokenSource.IsCancellationRequested)
             {
                 Frame frame;
-
                 try
                 {
                     Stream stream = networkStream;

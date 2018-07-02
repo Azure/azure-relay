@@ -155,7 +155,7 @@ namespace Relay.Bond.Epoxy
             {
                 await stream.WriteAsync(outputBuffer, 0, TotalSize);
             }
-            catch (Exception ex) when (ex is IOException || ex is ObjectDisposedException)
+            catch (Exception ex)
             {
                 logger.Site().Error(ex, "Failed to write entire frame.");
                 throw;

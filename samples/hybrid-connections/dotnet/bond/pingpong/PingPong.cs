@@ -23,18 +23,15 @@ namespace pingpong
                 return;
             }
 
-
             var ns = args[0];
             var hc = args[1];
             var keyname = args[2];
             var key = args[3];
 
-
             // Create a new hybrid connection listener to listen for 
             // incoming connections.
             var tokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(keyname, key);
             var address = $"sb://{ns}/{hc}";
-
 
             var transport = SetupAsync(address, tokenProvider).Result;
 
@@ -58,11 +55,9 @@ namespace pingpong
             RelayEpoxyListener pingPongListener = transport.MakeListener(address);
             pingPongListener.AddService(pingPongService);
 
-
             await pingPongListener.StartAsync();
 
             pingConnection = await transport.ConnectToAsync(address);
-
 
             return transport;
         }
@@ -75,7 +70,6 @@ namespace pingpong
         static Task[] MakeRequestsAndPrintAsync(int numRequests)
         {
             var pingPongProxy = new PingPongProxy<RelayEpoxyConnection>(pingConnection);
-
 
             var tasks = new Task[numRequests];
 
