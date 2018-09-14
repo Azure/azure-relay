@@ -15,7 +15,7 @@ and then start the client with
 
 whereby the arguments are as follows:
 
-* [ns] - fully qualified domain name for the Service Bus namespace, eg. contoso.servicebus.windows.net
+* [ns] - fully qualified domain name for the Azure Relay namespace, eg. contoso.servicebus.windows.net
 * [hc] - name of a previously configured Hybrid Connection (see [main README](../../README.md))
 * [keyname] - name of a SAS rule that confers the required right(s). "Listen" is required for the 
 server, "Send" is required for the client. The default management rule confers both.
