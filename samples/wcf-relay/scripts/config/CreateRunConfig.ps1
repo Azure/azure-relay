@@ -29,23 +29,21 @@ if(-not $?)
 
 Write-SpecialLog "Step 0: Creating Run Configuration" (Get-ScriptName) (Get-ScriptLineNumber)
 
-$config = @{
-    SERVICEBUS_NAMESPACE = "relaySample" + [System.DateTime]::Now.ToString("yyMMddHHmmss");
-    AZURE_LOCATION="North Europe";
-}
-
 if(-not (Test-Path $configFile))
 {
     Write-InfoLog "Creating a new run configuration at $configFile" (Get-ScriptName) (Get-ScriptLineNumber)
+    $config = @{
+       SERVICEBUS_NAMESPACE = "relaySample" + [System.DateTime]::Now.ToString("yyMMddHHmmss");
+    }
     &$scriptDir\ReplaceStringInFile.ps1 "$scriptDir\configurations.properties.template" $configFile $config
 }
 else
 {
-    Write-InfoLog "An existing run configuration was found at $configFile, just updating newer entries." (Get-ScriptName) (Get-ScriptLineNumber)
-    &$scriptDir\ReplaceStringInFile.ps1 $configFile $configFile $config
+    Write-InfoLog "An existing run configuration was found at $configFile." (Get-ScriptName) (Get-ScriptLineNumber)
 }
 
 $config = & "$scriptDir\ReadConfig.ps1" $configFile
+
 $config.Keys | sort | % { if(-not ($_.Contains("PASSWORD") -or $_.Contains("KEY"))) { Write-InfoLog ("Key = " + $_ + ", Value = " + $config[$_]) (Get-ScriptName) (Get-ScriptLineNumber) } }
 
 $configFile

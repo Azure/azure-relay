@@ -117,7 +117,7 @@ namespace RelaySamples
             var netTcpUri = new UriBuilder("sb", hostName, -1, properties[servicebusEntityPath] + "/NetTcp").ToString();
             var httpUri = new UriBuilder("https", hostName, -1, properties[servicebusEntityPath] + "/Http").ToString();
 
-            var program = Activator.CreateInstance(typeof (Program));
+            var program = Activator.CreateInstance(typeof(Program));
             if (program is ITcpListenerSampleUsingKeys)
             {
                 ((ITcpListenerSampleUsingKeys) program).Run(

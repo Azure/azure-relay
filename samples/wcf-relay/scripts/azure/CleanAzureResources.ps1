@@ -44,18 +44,21 @@ $config = & "$scriptDir\..\config\ReadConfig.ps1" $configFile
 
 $config.Keys | sort | % { if(-not ($_.Contains("PASSWORD") -or $_.Contains("KEY"))) { Write-SpecialLog ("Key = " + $_ + ", Value = " + $config[$_]) (Get-ScriptName) (Get-ScriptLineNumber) } }
 
+$context = Get-AzureRmContext
+if ($context -eq $null -or $context.Account -eq $null)
+{
+    $t1 = Connect-AzureRmAccount
+}
+
 $subName = $config["AZURE_SUBSCRIPTION_NAME"]
 Write-SpecialLog "Using subscription '$subName'" (Get-ScriptName) (Get-ScriptLineNumber)
-Select-AzureSubscription -SubscriptionName $subName
+$null = Set-AzureRmContext -Subscription $subName
 
 #Changing Error Action to Continue here onwards to have maximum resource deletion
 $ErrorActionPreference = "Continue"
 
-$success = $true
-
-Write-InfoLog "Deleting ServiceBus" (Get-ScriptName) (Get-ScriptLineNumber)
-& "$scriptDir\ServiceBus\DeleteServiceBusRelay.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"]
-$success = $success -and $?
+& "$scriptDir\ServiceBus\DeleteServiceBusRelay.ps1" $config["AZURE_RESOURCE_GROUP"] $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"]
+$success = $?
 
 if($success)
 {

@@ -1,10 +1,13 @@
 [CmdletBinding(PositionalBinding=$True)]
 Param(
     [Parameter(Mandatory = $true)]
-    [ValidatePattern("^[a-z0-9-]*$")]
+    [ValidatePattern("^[a-z0-9-]+$")]
+    [String]$ResourceGroup,                         # required    needs to be alphanumeric or '-'
+    [Parameter(Mandatory = $true)]
+    [ValidatePattern("^[a-z0-9-]+$")]
     [String]$Namespace,                             # required    needs to be alphanumeric or '-'
     [Parameter(Mandatory = $true)]
-    [ValidatePattern("^[a-z0-9-]*$")]
+    [ValidatePattern("^[a-z0-9-]+$")]
     [String]$Path                                   # required    needs to be alphanumeric or '-'
     )
 
@@ -29,7 +32,7 @@ if(-not $?)
 
 try
 {
-    $CurrentNamespace = Get-AzureSBNamespace -Name $Namespace
+    $CurrentNamespace = Get-AzureRmRelayNamespace -Name $Namespace -ResourceGroupName $ResourceGroup
 }
 catch
 {
@@ -38,19 +41,19 @@ catch
 
 if ($CurrentNamespace)
 {
-    Write-InfoLog "Deleting ServiceBus Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
+    Write-InfoLog "Deleting Azure Relay Namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
     try
     {
-        Remove-AzureSBNamespace -Name $Namespace -Force
-        Write-InfoLog "Delete Azure Service Bus Namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
+        Remove-AzureRmRelayNamespace -Name $Namespace -ResourceGroupName $ResourceGroup
+        Write-InfoLog "Deleted Azure Relay Namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
     }
     catch
     {
-        Write-ErrorLog "Failed to delete Azure Service Bus Namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber) $_
+        Write-ErrorLog "Failed to delete Azure Relay Namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber) $_
         throw
     }
 }
 else
 {
-    Write-InfoLog "The namespace: $Namespace does not exists."  (Get-ScriptName) (Get-ScriptLineNumber)
+    Write-InfoLog "The namespace: $Namespace does not exist."  (Get-ScriptName) (Get-ScriptLineNumber)
 }

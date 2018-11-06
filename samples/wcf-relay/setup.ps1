@@ -1,3 +1,8 @@
+[CmdletBinding(PositionalBinding=$True)]
+Param(
+    [switch]$SkipBuild
+    )
+
 ###########################################################
 # Start - Initialization - Invocation, Logging etc
 ###########################################################
@@ -18,6 +23,11 @@ if(-not $?)
 
 
 & "$scriptDir\scripts\prepare.ps1"
+
+if ($SkipBuild.IsPresent)
+{
+    return
+}
 
 $buildList=@()
 $buildErrorList=@()
@@ -61,4 +71,3 @@ else
     Write-SpecialLog "SUCCESS: All projects built successfully!" (Get-ScriptName) (Get-ScriptLineNumber)
     $buildList | % { Write-SpecialLog $_  (Get-ScriptName) (Get-ScriptLineNumber) }
 }
-

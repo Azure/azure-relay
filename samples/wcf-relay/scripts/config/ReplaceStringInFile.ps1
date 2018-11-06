@@ -36,11 +36,15 @@ $content = Get-Content $TempFilePath
 foreach( $key in $config.Keys )
 {
     $newVal = $config[$key]
-    if($content -like "*{$key}*")
+
+    $regexEscapedNewVal = $newVal.ToString().Replace("+", "\+")    
+    $matchingLine = $content -match "^\s*$key\s*=.*$"
+    if($matchingLine -and $matchingLine -notmatch "^\s*$key\s*=\s*$regexEscapedNewVal\s*$")
     {
+        # The configuration key is present but not already set to the correct value
         Write-InfoLog ("Updating $key with value: " + $config[$key]) (Get-ScriptName) (Get-ScriptLineNumber)
+        $content = $content -replace "^\s*$key\s*=.*$", "$key = $newVal"
     }
-    $content = $content -replace "{$key}", $newVal
 }
 
 $fileFolder = Split-Path $FilePath

@@ -28,7 +28,7 @@ namespace RelaySamples
      ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
     class Program : ITcpListenerSample
     {
-        public async Task Run(string listenAddress, string listenToken)
+        public Task Run(string listenAddress, string listenToken)
         {
             ServiceBusEnvironment.SystemConnectivity.Mode = ConnectivityMode.AutoDetect; // Auto-detect, default
             //ServiceBusEnvironment.SystemConnectivity.Mode = ConnectivityMode.Https; // HTTPS WebSockets
@@ -49,13 +49,15 @@ namespace RelaySamples
                 Console.ReadLine();
                 host.Close();
             }
+
+            return Task.FromResult(true);
         }
 
         [OperationContract]
-        async Task<string> Echo(string input)
+        Task<string> Echo(string input)
         {
             Console.WriteLine("\tCall received with input \"{0}\"", input);
-            return input;
+            return Task.FromResult(input);
         }
     }
 }

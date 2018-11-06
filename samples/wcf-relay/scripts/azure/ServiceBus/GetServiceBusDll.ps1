@@ -17,12 +17,12 @@ if(-not $?)
 # End - Initialization - Invocation, Logging etc
 ###########################################################
 
-$nugetExe = Join-Path $scriptDir "..\..\..\tools\nuget\nuget.exe"
-$install = & "$nugetExe" install WindowsAzure.ServiceBus -version 3.0 -OutputDirectory "$scriptDir\..\..\..\packages"
+$nugetExe = "nuget.exe"
+$install = & "$nugetExe" install WindowsAzure.ServiceBus -OutputDirectory "$scriptDir\..\..\..\packages"
 
 $sbNuget = (gci "$scriptDir\..\..\..\packages\WindowsAzure.ServiceBus.*")[0].FullName
 
-$sbDll = Join-Path $sbNuget "lib\net45-full\Microsoft.ServiceBus.dll"
+$sbDll = Join-Path $sbNuget "lib\net46\Microsoft.ServiceBus.dll"
 
 if(-not (Test-Path $sbDll))
 {
