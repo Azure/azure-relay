@@ -31,12 +31,10 @@ public class WebsocketListener {
         
         CompletableFuture.runAsync(() -> {
         	Scanner in = new Scanner(System.in);
-        	String input = in.nextLine();
+        	in.nextLine();
         	
-        	if (input != null) {
-        		listener.closeAsync().join();
-        		in.close();
-        	}
+    		listener.closeAsync().join();
+    		in.close();
         });
         
         while (listener.isOnline()) {
