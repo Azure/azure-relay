@@ -24,17 +24,6 @@ public class HttpListener {
 	public static void main(String[] args) throws URISyntaxException {
 		TokenProvider tokenProvider = TokenProvider.createSharedAccessSignatureTokenProvider(KEY_NAME, KEY);
 		HybridConnectionListener listener = new HybridConnectionListener(new URI(RELAY_NAMESPACE + ENTITY_PATH), tokenProvider);
-		
-        CompletableFuture.runAsync(() -> {
-        	Scanner in = new Scanner(System.in);
-        	System.out.println("Press ENTER to termiate this program.");
-        	String input = in.nextLine();
-        	
-        	if (input != null) {
-        		listener.closeAsync().join();
-        		in.close();
-        	}
-        });
         
         listener.setRequestHandler((context) -> {
             ByteBuffer inputStream = context.getRequest().getInputStream();
@@ -56,5 +45,14 @@ public class HttpListener {
         });
         
         listener.openAsync().join();
+        
+    	Scanner in = new Scanner(System.in);
+    	System.out.println("Press ENTER to terminate this program.");
+    	String input = in.nextLine();
+    	
+    	if (input != null) {
+    		listener.closeAsync().join();
+    		in.close();
+    	}
 	}
 }

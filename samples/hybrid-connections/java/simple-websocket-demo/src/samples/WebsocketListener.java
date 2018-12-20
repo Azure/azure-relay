@@ -27,7 +27,7 @@ public class WebsocketListener {
 		HybridConnectionListener listener = new HybridConnectionListener(new URI(RELAY_NAMESPACE + ENTITY_PATH), tokenProvider);
         
         listener.openAsync().join();
-        System.out.println("Listener is online. Press ENTER to termiate this program.");
+        System.out.println("Listener is online. Press ENTER to terminate this program.");
         
         CompletableFuture.runAsync(() -> {
         	Scanner in = new Scanner(System.in);

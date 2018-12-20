@@ -30,7 +30,7 @@ public class HttpSender {
 		Scanner in = new Scanner(System.in);
 
 		while (true) {
-			System.out.println("Please enter the message you want to send over http:");
+			System.out.println("Please enter the message you want to send over http, \"quit\" or \"q\" to terminate:");
 			String message = in.nextLine();
 			if (message.equalsIgnoreCase("quit") || message.equalsIgnoreCase("q")) break;
 			
