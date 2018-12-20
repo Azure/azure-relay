@@ -48,11 +48,9 @@ public class HttpListener {
         
     	Scanner in = new Scanner(System.in);
     	System.out.println("Press ENTER to terminate this program.");
-    	String input = in.nextLine();
-    	
-    	if (input != null) {
-    		listener.closeAsync().join();
-    		in.close();
-    	}
+    	in.nextLine();
+
+    	listener.closeAsync().join();
+    	in.close();
 	}
 }
