@@ -1,89 +1,93 @@
 # 'Simple' Web Socket Hybrid Connection Sample 
 
-First, as described in the description [Here](https://github.com/bainian12345/azure-relay/tree/java-samples/samples/hybrid-connections/java), you will need to retrieve different parameters from the enviroment variable `RELAY_CONNECTION_STRING` for connection and authentication purposes:
+First, you will need to gathered the connection parameters. Following the instructions [Here](https://github.com/azure-relay/tree/java-samples/samples/hybrid-connections/java), `RELAY_CONNECTION_STRING` should be already set as an environment varaiable for connection and authentication purposes, and the connection parameters can be retrieved as below:
 
 ```	java
 	static final String CONNECTION_STRING_ENV_VARIABLE_NAME = "RELAY_CONNECTION_STRING";
-	static final Map<String, String> connectionParams = HybridConnectionUtil.parseConnectionString(System.getenv(CONNECTION_STRING_ENV_VARIABLE_NAME));
-	static final String RELAY_NAMESPACE = connectionParams.get("Endpoint");
-	static final String ENTITY_PATH = connectionParams.get("EntityPath");
-	static final String KEY_NAME = connectionParams.get("SharedAccessKeyName");
-	static final String KEY = connectionParams.get("SharedAccessKey");
-```
-
-For Hybrid Connection with authorization required, `TokenProvider` will be required to authenticate connections made to Azure Relay:
-
-```java
-TokenProvider tokenProvider = TokenProvider.createSharedAccessSignatureTokenProvider(KEY_NAME, KEY);
+	static final RelayConnectionStringBuilder connectionParams = new RelayConnectionStringBuilder(System.getenv(CONNECTION_STRING_ENV_VARIABLE_NAME));
 ```
 
 ## Listener 
 
-Creates an instance of `HybridConnectionListener` which requires authentication from a `TokenProvider`: 
+This line below creates an instance of `HybridConnectionListener`. Using a `TokenProvider` instance is one of the ways to create a `HybridConnectionListener` instance with authentication required: 
 
 ```java
+TokenProvider tokenProvider = TokenProvider.createSharedAccessSignatureTokenProvider(KEY_NAME, KEY);
 HybridConnectionListener listener = new HybridConnectionListener(new URI(RELAY_NAMESPACE + ENTITY_PATH), tokenProvider);
 ```
 
-Opens the connection to Azure Relay and listens for any incoming connections:
+With a listener instance created like above, we can now open the connection to Azure Relay and listen for any incoming connections:
 
 ```java
 listener.openAsync();
 ```
 
-Once the listner is connected to the Hybrid Connection, it can start accepting web socket connections asynchronously, then returns the web socket instance once a connection is established:
+This section below will wait for the user to press the ENTER key, then shuts the listener instance and closes any of its connections, also notifying all of its senders to close as well:
+
+```java
+CompletableFuture.runAsync(() -> {
+	Scanner in = new Scanner(System.in);
+	in.nextLine();
+	
+	listener.closeAsync().join();
+	in.close();
+});
+```
+
+Once the listener is connected to the Hybrid Connection, it can start accepting web socket connections asynchronously. This line below returns a CompletableFuture of a web socket instance once a connection is established, and this web socket instance will be able to both send and receive messages to and from the remote endpoint:
 
 ```java
 listener.acceptConnectionAsync();
 ```
 
-
-This handler function will trigger once the http request is received. The context object is a combination of the incoming request and outgoing response:
-
-```java
-listener.setRequestHandler((context) -> {});
-```
-
-Blocks until a message is received from the web socket, and returns the message as a `ByteBuffer`:
+The code below will run on another thread after the web socket connection has been established. As long as the connection with the remote endpoint remains open, the web socket continuously listens for messages from the sender, then send back the message in prefix of "Echo: " in response.
 
 ```java
-ByteBuffer bytesReceived = websocket.receiveMessageAsync().join();
+CompletableFuture.runAsync(() -> {
+	System.out.println("New session connected.");
+	
+	while (websocket.isOpen()) {
+		ByteBuffer bytesReceived = websocket.receiveMessageAsync().join();
+		String msg = new String(bytesReceived.array());
+
+		System.out.println("Received: " + msg);
+		websocket.sendAsync("Echo: " + msg);
+	}
+	System.out.println("Session disconnected.");
+});
 ```
 
-Sends the message asynchronously to the remote web socket:
-
-```java
-websocket.sendAsync("Echo: " + msg);
-```
-
-Shuts the listener instance and closes any of its connections, also notifies all of its senders to close as well:
-
-```java
-listener.closeAsync().join();
-```
 
 ## Sender
 
-Establishes a `HybriConnectionClient` instance with authentication from `TokenProvider`:
+Similar to the Listener, this line below creates a `HybriConnectionClient` instance with authentication from `TokenProvider`:
 
 ```java
-TokenProvider tokenProvider = TokenProvider.createSharedAccessSignatureTokenProvider(KEY_NAME, KEY);
 HybridConnectionClient client = new HybridConnectionClient(new URI(RELAY_NAMESPACE + ENTITY_PATH), tokenProvider);
 ```
 
-Creates a connection to the Hybrid Connection instance and returns the corresponding web socket instance once the connection is established:
+Now we will connect the client instance to our Hybrid Connection. Once the connection is established, the CompletableFuture will complete with the corresponding web socket instance:
 
 ```java
 client.createConnectionAsync()
 ```
 
-Receives the next complete message sent from the remote web socket. Should be put in a loop to continuously receive messages:
+With the established web socket connection, we are now continuously sending messages read from console input to the listener web socket and printing the echo messages to console:
 
 ```java
-socket.receiveMessageAsync()
+while (true) {
+	System.out.println("Please enter the text you want to send, or enter \"quit\" or \"q\" to exit");
+	String input = in.nextLine();
+	if (input.equalsIgnoreCase("quit") || input.equalsIgnoreCase("q")) break;
+	socket.sendAsync(input).join();
+	
+	socket.receiveMessageAsync().thenAccept((byteBuffer) -> {
+		System.out.println("Received: " + new String(byteBuffer.array()));
+	});
+}
 ```
 
-Closes the `HybridConnectionClient` instance and its connections:
+In the end, we will terminate the web socket instance to terminate the application. This will also terminate its connection with the remote endpoint:
 
 ```java
 client.closeAsync();

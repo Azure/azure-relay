@@ -1,61 +1,57 @@
 # 'Simple' HTTP Hybrid Connection Sample 
 
-First, as described in the description [Here](https://github.com/bainian12345/azure-relay/tree/java-samples/samples/hybrid-connections/java), you will need to retrieve different parameters from the enviroment variable `RELAY_CONNECTION_STRING` for connection and authentication purposes:
+First, you will need to gathered the connection parameters. Following the instructions [Here](https://github.com/azure-relay/tree/java-samples/samples/hybrid-connections/java), `RELAY_CONNECTION_STRING` should be already set as an environment varaiable for connection and authentication purposes, and the connection parameters can be retrieved as below:
 
 ```	java
 	static final String CONNECTION_STRING_ENV_VARIABLE_NAME = "RELAY_CONNECTION_STRING";
-	static final Map<String, String> connectionParams = HybridConnectionUtil.parseConnectionString(System.getenv(CONNECTION_STRING_ENV_VARIABLE_NAME));
-	static final String RELAY_NAMESPACE = connectionParams.get("Endpoint");
-	static final String ENTITY_PATH = connectionParams.get("EntityPath");
-	static final String KEY_NAME = connectionParams.get("SharedAccessKeyName");
-	static final String KEY = connectionParams.get("SharedAccessKey");
-```
-
-For Hybrid Connection with authorization required, `TokenProvider` will be required to authenticate connections made to Azure Relay:
-
-```
-TokenProvider tokenProvider = TokenProvider.createSharedAccessSignatureTokenProvider(KEY_NAME, KEY);
+	static final RelayConnectionStringBuilder connectionParams = new RelayConnectionStringBuilder(System.getenv(CONNECTION_STRING_ENV_VARIABLE_NAME));
 ```
 
 ## Listener 
 
-Creates an instance of `HybridConnectionListener` which requires authentication from a `TokenProvider`: 
+This line below creates an instance of `HybridConnectionListener`. Using a `TokenProvider` instance is one of the ways to create a `HybridConnectionListener` instance with authentication required: 
 
 ```java
+TokenProvider tokenProvider = TokenProvider.createSharedAccessSignatureTokenProvider(KEY_NAME, KEY);
 HybridConnectionListener listener = new HybridConnectionListener(new URI(RELAY_NAMESPACE + ENTITY_PATH), tokenProvider);
 ```
 
-This handler function will trigger once the http request is received. The context object is a combination of the incoming request and outgoing response:
+This handler function will trigger once the http request is received. The context object is a combination of the incoming request and outgoing response objects. The handler method should be attached to the listener before the listener is opened:
 
 ```java
-listener.setRequestHandler((context) -> {});
+listener.setRequestHandler((context) -> {
+	
+	// Handles the incoming request here
+});
 ```
 
-Gets the incoming bytes from the request:
+Inside the request handler, we will read and print the incoming bytes from the request object from `context`, then set the status code ad status description to the response object from `context` as well. With the received message, we will then write to the output stream of the response as an echo in the form of bytes. After finishing writing to the output stream within the response object, we must close the response object in order for the written messages to be flushed:
 
 ```java
-ByteBuffer inputStream = context.getRequest().getInputStream();
+    ByteBuffer inputStream = context.getRequest().getInputStream();
+    String receivedText = (inputStream != null) ? new String(inputStream.array()) : "";
+    System.out.println("requestHandler received " + receivedText);
+    
+    RelayedHttpListenerResponse response = context.getResponse();
+    response.setStatusCode(202);
+    response.setStatusDescription("OK");
+    
+    try {
+		response.getOutputStream().write(("Echo: " + receivedText).getBytes());
+	 } catch (IOException e) {
+		e.printStackTrace();
+	 }
+	 
+	 response.close();
 ```
 
-Gets the output stream and writes to the response:
-
-```java
-response.getOutputStream().write(("Echo: " + receivedText).getBytes());
-```
-
-The response must be closed, and before it closes the message written will be flushed and sent:
-
-```java
-response.close();
-```
-
-Opens the connection to Azure Relay and listens for any incoming connections:
+With the request handler ready, the listener can be opened now to connect to Azure Relay and listen for any incoming connections:
 
 ```java
 listener.openAsync();
 ```
 
-Shuts down the listener instance and stops accepting any more requests or connections:
+Shut down the listener instance in the end to stop accepting any more requests or connections:
 
 ```java
 listener.closeAsync();
@@ -64,27 +60,24 @@ listener.closeAsync();
 
 ## Sender
 
-Establishes a HTTP connection to the server:
+This line below will create the url for reaching the Hybrid Connection HTTP endpoint:
 
 ```java
-String urlString = HybridConnectionUtil.getURLString(RELAY_NAMESPACE, ENTITY_PATH);
-HttpURLConnection conn = (HttpURLConnection)new URL(urlString).openConnection();
+String urlString = connectionParams.getHttpUrlString();
 ```
 
-Must set token string obtained from token provider to request header as part of the required authorization:
+The lines below are used to create a HTTP connection instance that requires authentication. Note that the authenticating token need to be set as the request header before the request is sent, and the `conn.setDoOutput(true)` line is needed to send any output successfully:
 
 ```java
 String tokenString = tokenProvider.getTokenAsync(urlString, Duration.ofHours(1)).join().getToken();
+
+HttpURLConnection conn = (HttpURLConnection)new URL(urlString).openConnection();
+conn.setRequestMethod(StringUtil.isNullOrEmpty(message) ? "GET" : "POST");
 conn.setRequestProperty("ServiceBusAuthorization", tokenString);
-```
-
-Need to set this to successfully send any output:
-
-```java
 conn.setDoOutput(true);
 ```
 
-Write to the request stream using a regular `OutputStreamWriter`:
+We can use a regular `OutputStreamWriter` object to write the message for our request as shown below:
 
 ```java
 OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream());
@@ -93,8 +86,15 @@ out.flush();
 out.close();
 ```
 
-Read the response as any other HTTP handler would from an input stream:
+A normal `InputStreamReader` can be used to read the inputs that are coming from our connection instance:
 
 ```java
-BufferedReader inStream = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+	String inputLine;
+	StringBuilder responseBuilder = new StringBuilder();
+	BufferedReader inStream = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+	
+	System.out.println("status code: " + conn.getResponseCode());
+	while ((inputLine = inStream.readLine()) != null) {
+		responseBuilder.append(inputLine);
+	}
 ```
