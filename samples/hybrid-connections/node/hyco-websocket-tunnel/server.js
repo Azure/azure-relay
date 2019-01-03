@@ -57,11 +57,11 @@ wsServer.on('request', function(request) {
   var args = url.pathname.split('/').slice(1);
   var action = args.shift();
   var params = url.query;
-  if (action == 'tunnel') {
+  //if (action == 'tunnel') {
     createTunnel(request, params.port, params.host);
-  } else {
-    request.reject(404);
-  }
+  //} else {
+  //  request.reject(404);
+  //}
 });
 
 function authenticate(request) {
@@ -101,9 +101,9 @@ function createTunnel(request, port, host) {
     tcpSock.connect(port, host || '127.0.0.1', function() {
       webSock.on('message', function(msg) {
         if (msg.type === 'utf8') {
-          //console.log('received utf message: ' + msg.utf8Data);
+          console.log('received utf message: ' + msg.utf8Data);
         } else {
-          //console.log('received binary message of length ' + msg.binaryData.length);
+          console.log('received binary message of length ' + msg.binaryData.length);
           tcpSock.write(msg.binaryData);
         }
       });
