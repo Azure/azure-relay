@@ -49,6 +49,10 @@ shell.on('command', function(cmd, args) {
     }
     shell.prompt();
   } else
+  if (cmd == 'list') {
+    shell.echo('Number of Tunnels: ' + tunnels.length);
+    shell.prompt();
+  } else
   if (cmd == 'exit') {
     shell.exit();
   } else {

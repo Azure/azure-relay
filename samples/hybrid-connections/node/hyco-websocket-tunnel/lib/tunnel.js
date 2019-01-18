@@ -61,7 +61,7 @@ exports.createTunnel = function(wsServerAddr, token, credentials, listen, forwar
             webSock.close();
           }
         } else {
-          log('Received binary message');
+          log('Received binary message of length ' + msg.binaryData.length);
           tcpSock.write(msg.binaryData);
         }
       });
