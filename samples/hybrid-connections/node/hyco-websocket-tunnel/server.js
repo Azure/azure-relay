@@ -82,7 +82,7 @@ function createTunnel(request, port, host) {
     return;
   }
   request.accept(null, null, null, function(webSock) {
-    console.log(webSock.remoteAddress + ' connected - Protocol Version ' + webSock.webSocketVersion);
+    console.log(webSock.remoteAddress + ' Connected - Protocol Version ' + webSock.webSocketVersion);
 
     var tcpSock = new net.Socket();
 
@@ -101,9 +101,9 @@ function createTunnel(request, port, host) {
     tcpSock.connect(port, host || '127.0.0.1', function() {
       webSock.on('message', function(msg) {
         if (msg.type === 'utf8') {
-          console.log('received utf message: ' + msg.utf8Data);
+          console.log('Received utf message: ' + msg.utf8Data);
         } else {
-          console.log('received binary message of length ' + msg.binaryData.length);
+          console.log('Received binary message of length ' + msg.binaryData.length);
           tcpSock.write(msg.binaryData);
         }
       });

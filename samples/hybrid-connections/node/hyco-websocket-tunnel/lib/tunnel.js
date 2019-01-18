@@ -54,14 +54,14 @@ exports.createTunnel = function(wsServerAddr, token, credentials, listen, forwar
       webSock = connection;
       webSock.on('message', function(msg) {
         if (msg.type == 'utf8') {
-          //log('Received UTF8 message');
+          log('Received UTF8 message');
           var data = JSON.parse(msg.utf8Data);
           if (data.status == 'error') {
             log(data.details);
             webSock.close();
           }
         } else {
-          //log('Received binary message');
+          log('Received binary message');
           tcpSock.write(msg.binaryData);
         }
       });
@@ -92,7 +92,7 @@ exports.createTunnel = function(wsServerAddr, token, credentials, listen, forwar
 
   server.listen(listen.port, listen.host, function() {
     var addr = server.address();
-    log('listening on ' + addr.address + ':' + addr.port);
+    log('Listening on ' + addr.address + ':' + addr.port);
     if (callback) callback(null, server);
   });
 
