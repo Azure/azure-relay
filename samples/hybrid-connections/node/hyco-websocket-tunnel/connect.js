@@ -24,6 +24,7 @@ shell.on('command', function(cmd, args) {
     shell.echo('Commands:');
     shell.echo('tunnel [localhost:]port [remotehost:]port');
     shell.echo('close [tunnel-id]');
+    shell.echo('list');
     shell.echo('exit');
     shell.prompt();
   } else
