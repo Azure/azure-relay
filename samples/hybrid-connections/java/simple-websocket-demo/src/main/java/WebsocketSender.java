@@ -1,10 +1,8 @@
-package samples;
-
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
-
 import com.microsoft.azure.relay.HybridConnectionClient;
 import com.microsoft.azure.relay.RelayConnectionStringBuilder;
 import com.microsoft.azure.relay.TokenProvider;
@@ -19,19 +17,19 @@ public class WebsocketSender {
 		
 		Scanner in = new Scanner(System.in);
 		
-		client.createConnectionAsync().thenAccept((webSocket) -> {
-			while (true) {
+		client.createConnectionAsync().thenAccept((connection) -> {
+			while (connection.isOpen()) {
 				System.out.println("Please enter the text you want to send, or enter \"quit\" or \"q\" to exit");
 				String input = in.nextLine();
 				if (input.equalsIgnoreCase("quit") || input.equalsIgnoreCase("q")) break;
-				webSocket.sendAsync(input).join();
-				
-				webSocket.receiveMessageAsync().thenAccept((byteBuffer) -> {
-					System.out.println("Received: " + new String(byteBuffer.array()));
+				connection.writeAsync(ByteBuffer.wrap(input.getBytes())).thenRun(() -> {
+					connection.readAsync().thenAccept((byteBuffer) -> {
+						System.out.println("Received: " + new String(byteBuffer.array()));
+					});
 				});
 			}
 			
-			webSocket.closeAsync().join();
+			connection.closeAsync().join();
 			in.close();
 		});	
 	}

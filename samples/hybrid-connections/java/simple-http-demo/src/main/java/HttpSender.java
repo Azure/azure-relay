@@ -1,5 +1,3 @@
-package samples;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,7 +9,6 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 
 import com.microsoft.azure.relay.RelayConnectionStringBuilder;
-import com.microsoft.azure.relay.StringUtil;
 import com.microsoft.azure.relay.TokenProvider;
 
 public class HttpSender {
@@ -20,8 +17,12 @@ public class HttpSender {
 	
 	public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
 		TokenProvider tokenProvider = TokenProvider.createSharedAccessSignatureTokenProvider(connectionParams.getSharedAccessKeyName(), connectionParams.getSharedAccessKey());
-		String urlString = connectionParams.getHttpUrlString();
-		String tokenString = tokenProvider.getTokenAsync(urlString, Duration.ofHours(1)).join().getToken();
+		
+		// For HTTP connections, the scheme must be https://
+		StringBuilder urlBuilder = new StringBuilder(connectionParams.getEndpoint().toString() + connectionParams.getEntityPath());
+		urlBuilder.replace(0, 5, "https://");
+		URL url = new URL(urlBuilder.toString());
+		String tokenString = tokenProvider.getTokenAsync(url.toString(), Duration.ofHours(1)).join().getToken();
 		Scanner in = new Scanner(System.in);
 
 		while (true) {
@@ -29,9 +30,9 @@ public class HttpSender {
 			String message = in.nextLine();
 			if (message.equalsIgnoreCase("quit") || message.equalsIgnoreCase("q")) break;
 			
-			HttpURLConnection conn = (HttpURLConnection)new URL(urlString).openConnection();
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			// To send a message body, use POST
-			conn.setRequestMethod(StringUtil.isNullOrEmpty(message) ? "GET" : "POST");
+			conn.setRequestMethod((message == null || message.length() == 0) ? "GET" : "POST");
 			conn.setRequestProperty("ServiceBusAuthorization", tokenString);
 			conn.setDoOutput(true);
 			

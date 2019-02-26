@@ -1,9 +1,9 @@
-package samples;
-
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 import java.util.Scanner;
 
 import com.microsoft.azure.relay.HybridConnectionListener;
@@ -20,8 +20,20 @@ public class HttpListener {
 		HybridConnectionListener listener = new HybridConnectionListener(new URI(connectionParams.getEndpoint().toString() + connectionParams.getEntityPath()), tokenProvider);
         
         listener.setRequestHandler((context) -> {
-            ByteBuffer inputStream = context.getRequest().getInputStream();
-            String receivedText = (inputStream != null) ? new String(inputStream.array()) : "";
+        	String receivedText = "";
+        	if (context.getRequest().getInputStream() != null) {
+        		try (Reader reader = new BufferedReader(new InputStreamReader(context.getRequest().getInputStream(), "UTF8"))) {
+                    StringBuilder builder = new StringBuilder();
+                    int c = 0;
+                    while ((c = reader.read()) != -1) {
+                        builder.append((char) c);
+                    }
+                    receivedText = builder.toString();
+                }
+        		catch (IOException e) {
+                	System.out.println(e.getMessage());
+				}
+        	}
             System.out.println("requestHandler received " + receivedText);
             
             RelayedHttpListenerResponse response = context.getResponse();
@@ -38,13 +50,14 @@ public class HttpListener {
             response.close();
         });
         
-        listener.openAsync().join();
-        
+		listener.openAsync().join();
+
     	Scanner in = new Scanner(System.in);
     	System.out.println("Press ENTER to terminate this program.");
     	in.nextLine();
 
-    	listener.closeAsync().join();
+    	listener.close();
     	in.close();
 	}
 }
+
