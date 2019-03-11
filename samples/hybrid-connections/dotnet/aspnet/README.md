@@ -9,7 +9,7 @@ be added in the near future, for instance.
 To use the extension, take the following steps:
 
 1. Add the Microsoft.Azure.Relay.AspNetCore assembly to your project. The assembly must be built from 
-this sampe repo at the moment. An "official" Nuget package will be available in a little while.
+this sample repo at the moment. An "official" Nuget package will be available at some point in the future.
 2. [Create a Hybrid Connection](https://docs.microsoft.com/en-us/azure/service-bus-relay/relay-hybrid-connections-http-requests-dotnet-get-started)
 3. After you have created the Hybrid Connection, find its "Shared Access Policies" portal tab and
 add a new rule "listen" with the Listen-permission checked.
@@ -18,10 +18,10 @@ add a new rule "listen" with the Listen-permission checked.
 The connection string contains all information to set up a listener. The samples in the 
 samples subfolder take the connection string as input.
 
-The `.UserAzureRelay()` hosting extension is available via the `Microsoft.Azure.Relay.AspNetCore` namespace.
+The `.UseAzureRelay()` hosting extension is available via the `Microsoft.Azure.Relay.AspNetCore` namespace.
 
 
-```
+``` CSharp
 using Microsoft.Azure.Relay.AspNetCore;
 
 
