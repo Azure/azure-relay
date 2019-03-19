@@ -24,11 +24,15 @@ public class WebsocketListener {
         	Scanner in = new Scanner(System.in);
         	in.nextLine();
         	
+        	// Closing the listener will cause it to stop accepting any more connections.
+        	// However, it will not shutdown the connections that are already established and still running.
     		listener.close();
     		in.close();
         });
         
         while (listener.isOnline()) {
+
+        	// If listener closes, then listener.acceptConnectionAsync() will complete with null after closing down
         	listener.acceptConnectionAsync().thenAccept(connection -> {
             	// connection may be null if the listener is closed before receiving a connection
             	if (connection != null) {
@@ -36,17 +40,18 @@ public class WebsocketListener {
                 	
         			while (connection.isOpen()) {
         				ByteBuffer bytesReceived = connection.readAsync().join();
-        				String msg = new String(bytesReceived.array());
-        				ByteBuffer msgToSend = ByteBuffer.wrap(("Echo: " + msg).getBytes());
+        				// If the read operation is still pending when connection closes, the read result as null.
+        				if (bytesReceived != null) {
+        					String msg = new String(bytesReceived.array());
+        					ByteBuffer msgToSend = ByteBuffer.wrap(("Echo: " + msg).getBytes());
 
-        				System.out.println("Received: " + msg);
-        				connection.writeAsync(msgToSend);
+        					System.out.println("Received: " + msg);
+        					connection.writeAsync(msgToSend);
+        				}
         			}
         			System.out.println("Session disconnected.");
             	}
         	}).join();
-			
-        	// If listener closes, then listener.acceptConnectionAsync() will complete with null after closing down
         }
 	}
 }

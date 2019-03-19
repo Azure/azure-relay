@@ -22,15 +22,19 @@ public class WebsocketSender {
 				System.out.println("Please enter the text you want to send, or enter \"quit\" or \"q\" to exit");
 				String input = in.nextLine();
 				if (input.equalsIgnoreCase("quit") || input.equalsIgnoreCase("q")) break;
+
 				connection.writeAsync(ByteBuffer.wrap(input.getBytes())).thenRun(() -> {
 					connection.readAsync().thenAccept((byteBuffer) -> {
-						System.out.println("Received: " + new String(byteBuffer.array()));
+						// If the read operation is still pending when connection closes, the read result returns null.
+						if (byteBuffer != null) {
+							System.out.println("Received: " + new String(byteBuffer.array()));
+						}
 					});
 				});
 			}
-			
 			connection.closeAsync().join();
+		}).whenComplete((result, exception) -> {
 			in.close();
-		});	
+		});
 	}
 }

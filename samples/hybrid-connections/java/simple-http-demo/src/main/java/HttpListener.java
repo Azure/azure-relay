@@ -19,6 +19,7 @@ public class HttpListener {
 		TokenProvider tokenProvider = TokenProvider.createSharedAccessSignatureTokenProvider(connectionParams.getSharedAccessKeyName(), connectionParams.getSharedAccessKey());
 		HybridConnectionListener listener = new HybridConnectionListener(new URI(connectionParams.getEndpoint().toString() + connectionParams.getEntityPath()), tokenProvider);
         
+		// The "context" object encapsulates both the incoming request and the outgoing response
         listener.setRequestHandler((context) -> {
         	String receivedText = "";
         	if (context.getRequest().getInputStream() != null) {
