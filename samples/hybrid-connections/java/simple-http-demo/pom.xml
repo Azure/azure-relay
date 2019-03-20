@@ -10,6 +10,8 @@
 		<artifactId>azure-relay</artifactId>
 		<version>0.0.1-PREVIEW</version>
 	</dependency>
+	
+	<!-- Uses log4j for logging, comment this block out to disable logging -->
 	<dependency>
 	    <groupId>org.apache.logging.log4j</groupId>
 	    <artifactId>log4j-slf4j-impl</artifactId>

@@ -12,11 +12,14 @@ import com.microsoft.azure.relay.TokenProvider;
 
 public class HttpSender {
 	static final String CONNECTION_STRING_ENV_VARIABLE_NAME = "RELAY_CONNECTION_STRING";
-	static final RelayConnectionStringBuilder connectionParams = new RelayConnectionStringBuilder(System.getenv(CONNECTION_STRING_ENV_VARIABLE_NAME));
-	
+	static final RelayConnectionStringBuilder connectionParams = new RelayConnectionStringBuilder(
+			System.getenv(CONNECTION_STRING_ENV_VARIABLE_NAME));
+
 	public static void main(String[] args) throws IOException {
-		TokenProvider tokenProvider = TokenProvider.createSharedAccessSignatureTokenProvider(connectionParams.getSharedAccessKeyName(), connectionParams.getSharedAccessKey());
-		
+		TokenProvider tokenProvider = TokenProvider.createSharedAccessSignatureTokenProvider(
+				connectionParams.getSharedAccessKeyName(), 
+				connectionParams.getSharedAccessKey());
+
 		// For HTTP connections, the scheme must be https://
 		StringBuilder urlBuilder = new StringBuilder(connectionParams.getEndpoint().toString() + connectionParams.getEntityPath());
 		urlBuilder.replace(0, 5, "https://");
@@ -27,8 +30,9 @@ public class HttpSender {
 		while (true) {
 			System.out.println("Please enter the message you want to send over http, \"quit\" or \"q\" to terminate:");
 			String message = in.nextLine();
-			if (message.equalsIgnoreCase("quit") || message.equalsIgnoreCase("q")) break;
-			
+			if (message.equalsIgnoreCase("quit") || message.equalsIgnoreCase("q"))
+				break;
+
 			// Starting a HTTP connection to the listener
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
@@ -37,12 +41,12 @@ public class HttpSender {
 			conn.setRequestMethod((message == null || message.length() == 0) ? "GET" : "POST");
 			conn.setRequestProperty("ServiceBusAuthorization", tokenString);
 			conn.setDoOutput(true);
-			
+
 			OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream());
 			out.write(message, 0, message.length());
 			out.flush();
 			out.close();
-			
+
 			// Reading the HTTP response
 			String inputLine;
 			BufferedReader reader = null;
@@ -50,7 +54,7 @@ public class HttpSender {
 			try {
 				InputStream inputStream = conn.getInputStream();
 				reader = new BufferedReader(new InputStreamReader(inputStream));
-				
+
 				System.out.println("status code: " + conn.getResponseCode());
 				while ((inputLine = reader.readLine()) != null) {
 					responseBuilder.append(inputLine);
@@ -65,7 +69,7 @@ public class HttpSender {
 				}
 			}
 		}
-		
+
 		in.close();
 	}
 }
