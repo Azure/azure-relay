@@ -11,11 +11,13 @@
 		<version>0.0.1-PREVIEW</version>
 	</dependency>
 
-	<!-- Uses log4j for logging, comment this block out to disable logging -->
+	<!-- Use log4j for logging, uncomment this block to see logging -->
+	<!-- 
   	<dependency>
 	    <groupId>org.apache.logging.log4j</groupId>
 	    <artifactId>log4j-slf4j-impl</artifactId>
 	    <version>2.11.0</version>
 	</dependency>
+	 -->
   </dependencies>
 </project>

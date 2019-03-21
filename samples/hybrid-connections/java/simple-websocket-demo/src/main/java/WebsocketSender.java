@@ -40,6 +40,9 @@ public class WebsocketSender {
 			}
 			connection.closeAsync().join();
 		}).whenComplete((result, exception) -> {
+			if (exception != null) {
+				exception.printStackTrace();
+			}
 			in.close();
 		});
 	}
