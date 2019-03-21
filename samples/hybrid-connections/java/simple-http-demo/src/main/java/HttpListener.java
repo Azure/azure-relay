@@ -1,7 +1,6 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Scanner;
@@ -28,11 +27,11 @@ public class HttpListener {
 		listener.setRequestHandler((context) -> {
 			String receivedText = "";
 			if (context.getRequest().getInputStream() != null) {
-				try (Reader reader = new BufferedReader(new InputStreamReader(context.getRequest().getInputStream(), "UTF8"))) {
+				try (BufferedReader reader = new BufferedReader(new InputStreamReader(context.getRequest().getInputStream(), "UTF8"))) {
 					StringBuilder builder = new StringBuilder();
-					int c = 0;
-					while ((c = reader.read()) != -1) {
-						builder.append((char) c);
+					String inputLine;
+					while ((inputLine = reader.readLine()) != null) {
+						builder.append(inputLine);
 					}
 					receivedText = builder.toString();
 				} catch (IOException e) {

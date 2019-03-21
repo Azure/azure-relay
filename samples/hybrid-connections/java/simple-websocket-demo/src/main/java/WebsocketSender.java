@@ -33,10 +33,10 @@ public class WebsocketSender {
 					connection.readAsync().thenAccept((byteBuffer) -> {
 						// If the read operation is still pending when connection closes, the read result returns null.
 						if (byteBuffer != null) {
-							System.out.println("Received: " + new String(byteBuffer.array()));
+							System.out.println("Received: " + new String(byteBuffer.array(), byteBuffer.arrayOffset(), byteBuffer.remaining()));
 						}
 					});
-				});
+				}).join();
 			}
 			connection.closeAsync().join();
 		}).whenComplete((result, exception) -> {

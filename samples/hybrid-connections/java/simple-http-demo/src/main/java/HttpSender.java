@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
 import java.util.Scanner;
@@ -20,10 +21,7 @@ public class HttpSender {
 				connectionParams.getSharedAccessKeyName(), 
 				connectionParams.getSharedAccessKey());
 
-		// For HTTP connections, the scheme must be https://
-		StringBuilder urlBuilder = new StringBuilder(connectionParams.getEndpoint().toString() + connectionParams.getEntityPath());
-		urlBuilder.replace(0, 5, "https://");
-		URL url = new URL(urlBuilder.toString());
+		URL url = buildHttpConnectionURL(connectionParams.getEndpoint().toString(), connectionParams.getEntityPath());
 		String tokenString = tokenProvider.getTokenAsync(url.toString(), Duration.ofHours(1)).join().getToken();
 		Scanner in = new Scanner(System.in);
 
@@ -71,5 +69,17 @@ public class HttpSender {
 		}
 
 		in.close();
+	}
+	
+	static URL buildHttpConnectionURL(String endpoint, String entity) throws MalformedURLException {
+		StringBuilder urlBuilder = new StringBuilder(endpoint + entity);
+		
+		// For HTTP connections, the scheme must be https://
+		int schemeIndex = urlBuilder.indexOf("://");
+		if (schemeIndex < 0) {
+			throw new IllegalArgumentException("Invalid scheme from the given endpoint.");
+		}
+		urlBuilder.replace(0, schemeIndex, "https");
+		return new URL(urlBuilder.toString());
 	}
 }

@@ -40,12 +40,13 @@ public class WebsocketListener {
 				// connection may be null if the listener is closed before receiving a connection
 				if (connection != null) {
 					System.out.println("New session connected.");
+					ByteBuffer bytesReceived;
 
 					while (connection.isOpen()) {
-						ByteBuffer bytesReceived = connection.readAsync().join();
+						bytesReceived = connection.readAsync().join();
 						// If the read operation is still pending when connection closes, the read result as null.
-						if (bytesReceived != null) {
-							String msg = new String(bytesReceived.array());
+						if (bytesReceived.remaining() > 0) {
+							String msg = new String(bytesReceived.array(), bytesReceived.arrayOffset(), bytesReceived.remaining());
 							ByteBuffer msgToSend = ByteBuffer.wrap(("Echo: " + msg).getBytes());
 
 							System.out.println("Received: " + msg);
