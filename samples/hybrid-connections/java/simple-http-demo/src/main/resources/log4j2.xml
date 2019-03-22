@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+    <Properties>
+        <Property name="logPath">logs</Property>
+        <Property name="fileName">relay-java</Property>
+    </Properties>
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n" />
+        </Console>
+        
+        <!-- uncomment the block below to enable logging to a new log file" -->
+<!--         <RollingFile name="logFile" fileName="${logPath}/${fileName}.log" filePattern="${logPath}/${fileName}_%d{yyyy-MM-dd}.log"> -->
+<!--             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n" /> -->
+<!--             <Policies> -->
+<!--                 Causes a rollover if the log file is older than the current JVM's start time -->
+<!--                 <OnStartupTriggeringPolicy /> -->
+<!--                 Causes a rollover once the date/time pattern no longer applies to the active file -->
+<!--                 <TimeBasedTriggeringPolicy interval="1" modulate="true" /> -->
+<!--             </Policies> -->
+<!--         </RollingFile> -->
+    </Appenders>
+    
+    <Loggers>
+        <Root level="error" additivity="false">
+            <AppenderRef ref="console" />
+    		<!-- uncomment the block below to enable logging to a new log file" -->
+			<!-- <AppenderRef ref="file" /> -->
+        </Root>
+		<Logger name="com.microsoft.azure.relay.RelayLogger" level="trace" additivity="false">
+    		<AppenderRef ref="console" />
+    		<!-- uncomment the block below to enable logging to a new log file" -->
+			<!-- <AppenderRef ref="file" /> -->
+    	</Logger>
+    </Loggers>
+</Configuration>

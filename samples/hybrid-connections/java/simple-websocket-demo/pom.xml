@@ -1,0 +1,23 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.microsoft.azure</groupId>
+  <artifactId>simple-websocket-demo</artifactId>
+  <version>1.0.0</version>
+  
+  <dependencies>
+	<dependency>
+		<groupId>com.microsoft.azure</groupId>
+		<artifactId>azure-relay</artifactId>
+		<version>0.0.1-PREVIEW</version>
+	</dependency>
+
+	<!-- Use log4j for logging, uncomment this block to see logging -->
+	<!-- 
+  	<dependency>
+	    <groupId>org.apache.logging.log4j</groupId>
+	    <artifactId>log4j-slf4j-impl</artifactId>
+	    <version>2.11.0</version>
+	</dependency>
+	 -->
+  </dependencies>
+</project>
