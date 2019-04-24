@@ -3,7 +3,7 @@
 
 namespace PortBridgeServerAgent
 {
-    partial class ServiceInstaller
+    partial class ServerServiceInstaller
     {
         /// <summary>
         /// Required designer variable.
@@ -39,13 +39,13 @@ namespace PortBridgeServerAgent
             this.serviceProcessInstaller.Account = System.ServiceProcess.ServiceAccount.NetworkService;
             this.serviceProcessInstaller.Password = null;
             this.serviceProcessInstaller.Username = null;
-            this.serviceProcessInstaller.AfterInstall += new System.Configuration.Install.InstallEventHandler(this.serviceProcessInstaller_AfterInstall);
             // 
             // serviceInstaller
             // 
+            this.serviceInstaller.DisplayName = "Port Bridge Service";
             this.serviceInstaller.ServiceName = "PortBridgeService";
             // 
-            // ProjectInstaller
+            // ServerServiceInstaller
             // 
             this.Installers.AddRange(new System.Configuration.Install.Installer[] {
             this.serviceProcessInstaller,
