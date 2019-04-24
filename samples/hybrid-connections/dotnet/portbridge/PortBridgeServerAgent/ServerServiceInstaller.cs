@@ -7,10 +7,11 @@ namespace PortBridgeServerAgent
     using System.Configuration.Install;
 
     [RunInstaller(true)]
-    public partial class ServiceInstaller : Installer
+    public partial class ServerServiceInstaller : Installer
     {
-        void serviceProcessInstaller_AfterInstall(object sender, InstallEventArgs e)
+        public ServerServiceInstaller()
         {
+            InitializeComponent();
         }
     }
 }
