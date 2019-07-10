@@ -5,6 +5,7 @@ namespace PortBridgeServerAgent
 {
     using System;
     using System.Configuration;
+    using System.Diagnostics;
     using System.ServiceProcess;
     using PortBridge;
 
@@ -19,6 +20,18 @@ namespace PortBridgeServerAgent
 
         static void Main(string[] args)
         {
+            // FUTURE:
+            // * These settings were moved out of App.config b/c of:
+            //   https://github.com/dotnet/corefx/issues/24829 System.Diagnostics.TraceSource doesn't
+            //   read configuration from App.config in .NET Core?
+            // * Switch back to ConsoleTraceListener after this is fixed in .NET 3.0:
+            //   https://github.com/dotnet/corefx/issues/31428 Port more TraceListeners
+            {
+                Trace.AutoFlush = true;
+                Trace.IndentSize = 4;
+                Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+            }
+
             PrintLogo();
 
             var settings = ConfigurationManager.GetSection("portBridge") as PortBridgeSection;
@@ -81,12 +94,12 @@ namespace PortBridgeServerAgent
 
             if (!runOnConsole)
             {
-                ServiceController sc = new ServiceController("PortBridgeService");
                 try
                 {
+                    ServiceController sc = new ServiceController("PortBridgeService");
                     var status = sc.Status;
                 }
-                catch (SystemException)
+                catch (SystemException) // Either the service doesn't exist or we're not on Windows
                 {
                     runOnConsole = true;
                 }

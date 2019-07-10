@@ -1,13 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.705
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortBridgeClientAgent", "PortBridgeClientAgent\PortBridgeClientAgent.csproj", "{1D83FB4F-796F-40B8-BDD1-4BF5CF83D5E6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PortBridgeClientAgent", "PortBridgeClientAgent\PortBridgeClientAgent.csproj", "{1D83FB4F-796F-40B8-BDD1-4BF5CF83D5E6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{70015950-78EB-4808-9645-1A04DCC2DAB8} = {70015950-78EB-4808-9645-1A04DCC2DAB8}
+	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortBridgeServerAgent", "PortBridgeServerAgent\PortBridgeServerAgent.csproj", "{9C1A686F-EEBE-4182-8799-C614C628DEF1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PortBridgeServerAgent", "PortBridgeServerAgent\PortBridgeServerAgent.csproj", "{9C1A686F-EEBE-4182-8799-C614C628DEF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortBridge", "PortBridge\PortBridge.csproj", "{70015950-78EB-4808-9645-1A04DCC2DAB8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PortBridge", "PortBridge\PortBridge.csproj", "{70015950-78EB-4808-9645-1A04DCC2DAB8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F3F93235-8D92-4249-85FB-69761A6AE757}"
 	ProjectSection(SolutionItems) = preProject
@@ -38,5 +41,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AA0AC2B2-C8D4-4D66-B899-E6A88998B0BD}
 	EndGlobalSection
 EndGlobal

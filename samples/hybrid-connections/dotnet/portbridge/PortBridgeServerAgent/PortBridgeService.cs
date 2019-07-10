@@ -12,7 +12,7 @@ namespace PortBridgeServerAgent
         public PortBridgeService(PortBridgeServiceForwarderHost host)
         {
             this.host = host;
-            InitializeComponent();
+            ServiceName = "PortBridgeService";
         }
 
         protected override void OnStart(string[] args)

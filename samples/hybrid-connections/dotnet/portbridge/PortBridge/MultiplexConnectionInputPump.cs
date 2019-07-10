@@ -9,6 +9,7 @@ namespace PortBridge
     using System.IO;
     using System.Net.Sockets;
     using System.Threading;
+    using System.Threading.Tasks;
 
     public class MultiplexConnectionInputPump
     {
@@ -52,18 +53,18 @@ namespace PortBridge
         public void Run(bool completeSynchronously)
         {
             // read from delegate
-            bufferRead.BeginInvoke(preambleBuffer, 0, preambleBuffer.Length, DoneReadingPreamble, null);
+            Task.Run(() => bufferRead(preambleBuffer, 0, preambleBuffer.Length)).ContinueWith(DoneReadingPreamble);
             if (completeSynchronously)
             {
                 stopInput.WaitOne();
             }
         }
 
-        public void DoneReadingPreamble(IAsyncResult readOutputAsyncResult)
+        public void DoneReadingPreamble(Task<int> bufferReadTask)
         {
             try
             {
-                int bytesRead = bufferRead.EndInvoke(readOutputAsyncResult);
+                int bytesRead = bufferReadTask.GetAwaiter().GetResult();
                 if (bytesRead > 0)
                 {
                     if (bytesRead == 1)
@@ -77,7 +78,7 @@ namespace PortBridge
                     int connectionId = BitConverter.ToInt32(preambleBuffer, 0);
                     ushort frameSize = BitConverter.ToUInt16(preambleBuffer, sizeof (Int32));
 
-                    // we have to get the frame off the wire irrespective of 
+                    // we have to get the frame off the wire irrespective of
                     // whether we can dispatch it
                     if (frameSize > 0)
                     {
@@ -166,7 +167,7 @@ namespace PortBridge
 
                     if (!stopped)
                     {
-                        bufferRead.BeginInvoke(preambleBuffer, 0, preambleBuffer.Length, DoneReadingPreamble, null);
+                        Task.Run(() => bufferRead(preambleBuffer, 0, preambleBuffer.Length)).ContinueWith(DoneReadingPreamble);
                     }
                 }
                 else

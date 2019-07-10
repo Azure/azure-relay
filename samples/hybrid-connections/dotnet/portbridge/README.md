@@ -10,6 +10,10 @@ listener were local on network B.
 > The sample was built far before the Task-based async programming model was 
 > introduced and therefore uses the classic async callback model.  
 
+> Port Bridge previously supported named pipes when it was based on .NET Framework.  After Port
+> Bridge was converted to .NET Core, named pipe support is broken.  See the comments in
+> NamedPipeClientConnectionForwarder
+
 PortBridge is similar to what can generally be achieved via SSH tunneling, but
 is realized over the Relay so that both parties can reside safely behind Firewalls,
 leverage the Service Bus authorization integration, and have all communication run
@@ -48,24 +52,39 @@ efficient.
 
 ## How do I use it?
 
-This is a code sample and thus you’ll have to build it using Visual Studio 2015.
-At present, the sample depends on the Windows version of the .NET Framework. During 
-the public preview, the sample will eventually also work for .NET Core. 
+This is a code sample and thus you’ll have to build it with the .NET Core 2.2 SDK in order to create
+redistributable binaries:
+```
+# Publishes to samples\hybrid-connections\dotnet\portbridge\Release\netcoreapp2.2\publish
+dotnet publish path\to\samples\hybrid-connections\dotnet\portbridge --configuration Release
+```
 
-There are three code projects: 
+Alternatively, you can build and run `PortBridge.sln` from within Visual Studio 2017 or higher.
+
+There are three code projects:
 * PortBridgeServerAgent implementing the service side forwarding connections to the configured targets
 * PortBridgeClientAgent implementing the client side accepting connections and mapping them through the Relay
 * PortBridge assembly containing the bulk of the logic for Port Bridge. 
 
 ### Service
 
-The service’s exe file is "PortBridge.exe" and is both a console app and a
-Windows Service. If the Windows Service isn’t registered, the app will always
-start as a console app. If the Windows Service is registered (with installutil.exe), 
-you can force console-mode with the –c command line option.
+The service’s executable is "PortBridgeServerAgent.dll" and is both a console app and Windows Service.
 
-The app.config file on the Service Side (PortBridge/app.config,
-PortBridge.exe.config in the binaries folder) specifies what ports or named
+To register it as a Windows Service and start it, run this in PowerShell:
+```
+New-Service `
+    -Name PortBridgeService `
+    -BinaryPathName "`"C:\Program Files\dotnet\dotnet.exe`" drive:\absolute\path\to\PortBridgeServerAgent.dll)" `
+    -StartupType Automatic `
+    -Credential ([PSCredential]::new('NT AUTHORITY\NETWORK SERVICE', [SecureString]::new()))
+Start-Service -Name PortBridgeService
+```
+
+To run it as a console app, run `dotnet path\to\PortBridgeServerAgent.dll`.  If the Windows
+Service is registered, you'll need to pass the `-c` argument to force it to run as a console app.
+
+The app.config file on the Service Side (PortBridgeServerAgent/app.config,
+PortBridgeServerAgent.exe.config in the binaries folder) specifies what ports or named
 pipes you want to project into Service Bus:
 
 ``` XML
@@ -128,9 +147,23 @@ project the machine "otherbox" into Service Bus and allow SQL Server TDS connect
 
 ### Agent
 
-The client agent and is also both a console app and a Windows Service.
+The client’s executable is "PortBridgeClientAgent.dll" and is also both a console app and Windows Service.
 
-The app.config file on the Agent side specifies which ports or
+To register it as a Windows Service and start it, run this in PowerShell:
+```
+New-Service `
+    -Name PortBridgeAgentService `
+    -BinaryPathName "`"C:\Program Files\dotnet\dotnet.exe`" drive:\absolute\path\to\PortBridgeClientAgent.dll)" `
+    -StartupType Automatic `
+    -Credential ([PSCredential]::new('NT AUTHORITY\NETWORK SERVICE', [SecureString]::new()))
+Start-Service -Name PortBridgeAgentService
+```
+
+To run it as a console app, run `dotnet path\to\PortBridgeClientAgent.dll`.  If the Windows
+Service is registered, you'll need to pass the `-c` argument to force it to run as a console app.
+
+The app.config file on the Agent Side (PortBridgeClientAgent/app.config,
+PortBridgeClientAgent.exe.config in the binaries folder) specifies what ports or named
 pipes you want to project into the Agent machine and whether and how you want to
 firewall these ports. The firewall rules here are not interacting with your
 local firewall. This is an additional layer of protection.

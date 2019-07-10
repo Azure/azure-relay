@@ -4,6 +4,7 @@
 namespace PortBridge
 {
     using System;
+    using System.Threading.Tasks;
 
     public class BufferPump : Pump
     {
@@ -33,22 +34,22 @@ namespace PortBridge
 
             Caller = new PumpAsyncResult(callback, state);
 
-            bufferRead.BeginInvoke(inputBuffer, 0, inputBuffer.Length, DoneReading, null);
+            Task.Run(() => bufferRead(inputBuffer, 0, inputBuffer.Length)).ContinueWith(DoneReading);
 
             return Caller;
         }
 
-        public void DoneReading(IAsyncResult readOutputAsyncResult)
+        public void DoneReading(Task<int> bufferReadTask)
         {
             try
             {
-                int bytesRead = bufferRead.EndInvoke(readOutputAsyncResult);
+                int bytesRead = bufferReadTask.GetAwaiter().GetResult();
                 if (bytesRead > 0)
                 {
                     bufferWrite(inputBuffer, 0, bytesRead);
                     if (!IsClosed)
                     {
-                        bufferRead.BeginInvoke(inputBuffer, 0, inputBuffer.Length, DoneReading, null);
+                        Task.Run(() => bufferRead(inputBuffer, 0, inputBuffer.Length)).ContinueWith(DoneReading);
                     }
                 }
                 else

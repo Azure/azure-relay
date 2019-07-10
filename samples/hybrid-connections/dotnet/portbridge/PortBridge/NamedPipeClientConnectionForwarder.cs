@@ -46,6 +46,7 @@ namespace PortBridge
         {
             try
             {
+#if NETFRAMEWORK
                 PipeSecurity pipeSecurity = new PipeSecurity();
                 // deny network access, allow read/write to everyone locally and the owner/creator
                 pipeSecurity.SetSecurityDescriptorSddlForm("D:(D;;FA;;;NU)(A;;0x12019f;;;WD)(A;;0x12019f;;;CO)");
@@ -61,6 +62,9 @@ namespace PortBridge
                         4096,
                         pipeSecurity);
                 pipeListener.BeginWaitForConnection(ClientAccepted, pipeListener);
+#else
+                throw new PlatformNotSupportedException("Named pipes are not supported due to https://github.com/dotnet/corefx/issues/31190: System.IO.Pipes.AccessControl package does not work");
+#endif
             }
             catch (Exception ex)
             {
