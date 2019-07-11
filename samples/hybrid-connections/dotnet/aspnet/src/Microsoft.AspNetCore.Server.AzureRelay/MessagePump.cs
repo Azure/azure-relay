@@ -163,6 +163,13 @@ namespace Microsoft.Azure.Relay.AspNetCore
                         await _application.ProcessRequestAsync(context);
                         await featureContext.OnResponseStart();
                     }
+                    catch
+                    {
+                        // We haven't sent a response yet, try to send a 500 Internal Server Error
+                        requestContext.Response.Headers.Clear();
+                        SetFatalResponse(requestContext, (HttpStatusCode)500);
+                        throw;
+                    }
                     finally
                     {
                         await featureContext.OnCompleted();
@@ -174,9 +181,6 @@ namespace Microsoft.Azure.Relay.AspNetCore
                 {
                     LogHelper.LogException(_logger, "ProcessRequestAsync", ex);
                     _application.DisposeContext(context, ex);
-                        // We haven't sent a response yet, try to send a 500 Internal Server Error
-                        requestContext.Response.Headers.Clear();
-                        SetFatalResponse(requestContext, (HttpStatusCode)500);
                     
                 }
                 finally
