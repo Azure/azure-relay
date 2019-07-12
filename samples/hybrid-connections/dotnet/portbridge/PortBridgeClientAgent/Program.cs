@@ -9,6 +9,7 @@ namespace PortBridgeClientAgent
     using System.Diagnostics;
     using System.Net;
     using System.ServiceProcess;
+    using System.Threading.Tasks;
     using PortBridge;
 
     class Program
@@ -156,8 +157,14 @@ namespace PortBridgeClientAgent
             if (runOnConsole)
             {
                 host.Open();
-                Console.WriteLine("Press [ENTER] to exit.");
-                Console.ReadLine();
+                Console.WriteLine("Press Ctrl+C to exit.");
+                var cancelledTcs = new TaskCompletionSource<bool>();
+                Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs e) =>
+                {
+                    e.Cancel = true;
+                    cancelledTcs.TrySetResult(true);
+                };
+                cancelledTcs.Task.Wait();
                 host.Close();
             }
             else
