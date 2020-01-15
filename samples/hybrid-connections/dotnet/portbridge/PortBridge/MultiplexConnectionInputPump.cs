@@ -32,7 +32,8 @@ namespace PortBridge
             this.connectionFactory = connectionFactory;
             connections = new Dictionary<int, MultiplexedConnection>();
             inputBuffer = new byte[65536];
-            preambleBuffer = new byte[sizeof (int) + sizeof (ushort)];
+            // Each frame is prefixed with a 32-bit connectionId and a 16-bit length value.
+            preambleBuffer = new byte[sizeof(int) + sizeof(ushort)];
             stopInput = new ManualResetEvent(false);
         }
 
@@ -70,11 +71,8 @@ namespace PortBridge
                     while (bytesRead < preambleBuffer.Length)
                     {
                         int newBytesRead = this.bufferRead(preambleBuffer, bytesRead, preambleBuffer.Length - bytesRead);
+                        CheckForEndOfStream(newBytesRead, "Unexpected EOF while reading preamble");
                         bytesRead += newBytesRead;
-                        if (newBytesRead == 0)
-                        {
-                            throw new ProtocolViolationException("Unexpected EOF while reading preamble");
-                        }
                     }
 #if VERBOSE
                     Trace.TraceInformation("Input, read preamble: {0}", bytesRead);
@@ -92,11 +90,8 @@ namespace PortBridge
                         do
                         {
                             int newBytesRead = this.bufferRead(inputBuffer, bytesRead, frameSize - bytesRead);
+                            CheckForEndOfStream(newBytesRead, "Unexpected EOF while reading frame payload");
                             bytesRead += newBytesRead;
-                            if (newBytesRead == 0)
-                            {
-                                throw new ProtocolViolationException("Unexpected EOF while reading frame payload");
-                            }
                         }
                         while (bytesRead < frameSize);
 #if VERBOSE
@@ -189,6 +184,14 @@ namespace PortBridge
             {
                 Trace.TraceError("Error starting multiplex pump : {0}", ex.Message);
                 OnCompleted();
+            }
+        }
+
+        static void CheckForEndOfStream(int bytesRead, string message)
+        {
+            if (bytesRead == 0)
+            {
+                throw new ProtocolViolationException(message);
             }
         }
 

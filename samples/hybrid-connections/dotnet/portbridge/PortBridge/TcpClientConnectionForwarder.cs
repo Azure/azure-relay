@@ -29,7 +29,7 @@ namespace PortBridge
         StreamBufferWritePump outputPump;
         StreamBufferWritePump rawInputPump;
         TcpListener tcpListener;
-        bool open;
+        volatile bool open;
 
         public TcpClientConnectionForwarder(
             string serviceNamespace,
@@ -90,9 +90,9 @@ namespace PortBridge
 
         public void Dispose()
         {
+            this.open = false;
             lock (connectLock)
             {
-                this.open = false;
                 DataChannelClose();
             }
         }
