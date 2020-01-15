@@ -7,22 +7,20 @@ namespace PortBridge
     using System.Diagnostics;
     using System.Threading;
 
-    public class MultiplexedConnection : IDisposable
+    public abstract class MultiplexedConnection : IDisposable
     {
         static int lastConnection;
         readonly BufferWrite bufferWrite;
 
         public MultiplexedConnection(BufferWrite bufferWrite)
+            : this(bufferWrite, Interlocked.Increment(ref lastConnection))
         {
-            Id = Interlocked.Increment(ref lastConnection);
-            this.bufferWrite = bufferWrite;
-            Trace.TraceInformation("Connection {0} created", Id);
         }
 
         public MultiplexedConnection(BufferWrite bufferWrite, int connectionId)
         {
             Id = connectionId;
-            this.bufferWrite = bufferWrite;
+            this.bufferWrite = bufferWrite ?? throw new ArgumentNullException(nameof(bufferWrite));
             Trace.TraceInformation("Connection {0} created", connectionId);
         }
 
@@ -41,10 +39,7 @@ namespace PortBridge
 
         public void Write(byte[] buffer, int offset, int count)
         {
-            if (bufferWrite != null)
-            {
-                bufferWrite(buffer, offset, count);
-            }
+            bufferWrite(buffer, offset, count);
         }
     }
 }

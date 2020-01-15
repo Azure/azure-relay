@@ -25,7 +25,8 @@ namespace PortBridge
             ThisLock = new object();
         }
 
-        object ThisLock { get; }
+        protected object ThisLock { get; }
+
         public object AsyncState { get; }
 
         public WaitHandle AsyncWaitHandle
@@ -49,8 +50,8 @@ namespace PortBridge
             }
         }
 
-        public bool CompletedSynchronously { get; set; }
-        public bool IsCompleted { get; set; }
+        public bool CompletedSynchronously { get; private set; }
+        public bool IsCompleted { get; private set; }
         // Call this version of complete when your asynchronous operation is complete.  This will update the state
         // of the operation and notify the callback.
         protected void Complete(bool completedSynchronously)

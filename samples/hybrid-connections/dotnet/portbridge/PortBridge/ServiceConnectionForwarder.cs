@@ -87,6 +87,10 @@ namespace PortBridge
 
             tokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(ruleName, ruleKey);
             relayListener = new HybridConnectionListener(endpointVia, tokenProvider);
+
+            relayListener.Online += (s, e) => Trace.TraceInformation("{0} Online", relayListener);
+            relayListener.Connecting += (s, e) => Trace.TraceWarning("{0} Re-connecting! {1}: {2}", relayListener, relayListener.LastError.GetType(), relayListener.LastError.Message);
+            relayListener.Offline += (s, e) => Trace.TraceError("{0} Offline! {1}: {2}", relayListener, relayListener.LastError.GetType(), relayListener.LastError.Message);
         }
 
         public async Task<bool> OpenService()

@@ -7,6 +7,7 @@ namespace PortBridge
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
+    using System.Net;
     using System.Net.Sockets;
     using System.Threading;
 
@@ -66,9 +67,14 @@ namespace PortBridge
                 int bytesRead = bufferRead.EndInvoke(readOutputAsyncResult);
                 if (bytesRead > 0)
                 {
-                    if (bytesRead == 1)
+                    while (bytesRead < preambleBuffer.Length)
                     {
-                        bytesRead += bufferRead(preambleBuffer, 1, preambleBuffer.Length - 1);
+                        int newBytesRead = this.bufferRead(preambleBuffer, bytesRead, preambleBuffer.Length - bytesRead);
+                        bytesRead += newBytesRead;
+                        if (newBytesRead == 0)
+                        {
+                            throw new ProtocolViolationException("Unexpected EOF while reading preamble");
+                        }
                     }
 #if VERBOSE
                     Trace.TraceInformation("Input, read preamble: {0}", bytesRead);
@@ -85,7 +91,12 @@ namespace PortBridge
                         bytesRead = 0;
                         do
                         {
-                            bytesRead += bufferRead(inputBuffer, bytesRead, frameSize - bytesRead);
+                            int newBytesRead = this.bufferRead(inputBuffer, bytesRead, frameSize - bytesRead);
+                            bytesRead += newBytesRead;
+                            if (newBytesRead == 0)
+                            {
+                                throw new ProtocolViolationException("Unexpected EOF while reading frame payload");
+                            }
                         }
                         while (bytesRead < frameSize);
 #if VERBOSE
@@ -135,7 +146,7 @@ namespace PortBridge
                                 {
                                     Trace.TraceInformation(
                                         "Socket cancelled with code {0} during pending read: {1}",
-                                        ((SocketException) ioe.InnerException).ErrorCode,
+                                        ((SocketException) ioe.InnerException).SocketErrorCode,
                                         ioe.Message);
                                 }
                                 else
@@ -184,10 +195,7 @@ namespace PortBridge
         void OnCompleted()
         {
             Close();
-            if (Completed != null)
-            {
-                Completed(this, new EventArgs());
-            }
+            this.Completed?.Invoke(this, EventArgs.Empty);
         }
     }
 

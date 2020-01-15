@@ -58,7 +58,7 @@ namespace PortBridge
                     {
                         Trace.TraceInformation(
                             "Socket cancelled with code {0} during pending read: {1}",
-                            ((SocketException) ioe.InnerException).ErrorCode,
+                            ((SocketException) ioe.InnerException).SocketErrorCode,
                             ioe.Message);
                     }
                     else
