@@ -53,9 +53,6 @@
     <Compile Include="AsyncResult.cs" />
     <Compile Include="BufferPump.cs" />
     <Compile Include="BufferReadWrite.cs" />
-    <Compile Include="CompositeDuplexStream.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="IClientConnectionForwarder.cs" />
     <Compile Include="IPRange.cs" />
     <Compile Include="InputQueue.cs" />
@@ -74,7 +71,6 @@
     <Compile Include="NamedPipeClientConnectionForwarder.cs" />
     <Compile Include="StreamBufferWritePump.cs" />
     <Compile Include="StreamConnection.cs" />
-    <Compile Include="StreamOverWriteDelegate.cs" />
     <Compile Include="ThrottledQueueBufferedStream.cs" />
   </ItemGroup>
   <ItemGroup>

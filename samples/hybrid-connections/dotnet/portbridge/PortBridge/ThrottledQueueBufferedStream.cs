@@ -15,10 +15,6 @@ namespace PortBridge
             sempahore = new Semaphore(throttleCapacity, throttleCapacity);
         }
 
-        public ThrottledQueueBufferedStream(TimeSpan naglingDelay)
-            : base(naglingDelay)
-        {
-        }
 
         protected override void EnqueueChunk(byte[] chunk)
         {

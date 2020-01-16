@@ -8,7 +8,7 @@ namespace PortBridge
     using System.IO;
     using System.Net.Sockets;
 
-    class MultiplexedTcpConnection : MultiplexedConnection
+    sealed class MultiplexedTcpConnection : MultiplexedConnection
     {
         MultiplexConnectionOutputPump outputPump;
         TcpClient tcpClient;
@@ -49,10 +49,7 @@ namespace PortBridge
                 Trace.TraceError("Failure in multiplex pump: {0}", ex.Message);
             }
 
-            if (Closed != null)
-            {
-                Closed(this, new EventArgs());
-            }
+            this.Closed?.Invoke(this, EventArgs.Empty);
 
             Dispose();
         }

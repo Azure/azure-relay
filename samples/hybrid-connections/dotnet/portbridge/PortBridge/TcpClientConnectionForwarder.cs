@@ -15,7 +15,7 @@ namespace PortBridge
     {
         readonly string bindTo;
         readonly object connectionLock = new object();
-        readonly Dictionary<int, MultiplexedTcpConnection> connections;
+        readonly IDictionary<int, MultiplexedTcpConnection> connections;
         readonly object connectLock = new object();
         readonly Uri endpointVia;
         readonly IEnumerable<IPRange> firewallRules;
@@ -29,6 +29,7 @@ namespace PortBridge
         StreamBufferWritePump outputPump;
         StreamBufferWritePump rawInputPump;
         TcpListener tcpListener;
+        volatile bool open;
 
         public TcpClientConnectionForwarder(
             string serviceNamespace,
@@ -62,11 +63,13 @@ namespace PortBridge
                 tcpListener = new TcpListener(bindToAddress, fromPort);
 
                 tcpListener.Start();
+                this.open = true;
                 tcpListener.BeginAcceptTcpClient(ClientAccepted, null);
             }
             catch (Exception ex)
             {
                 Trace.TraceError("Unable to open listener: {0}", ex.Message);
+                this.open = false;
                 throw;
             }
         }
@@ -75,6 +78,7 @@ namespace PortBridge
         {
             try
             {
+                this.open = false;
                 tcpListener.Stop();
             }
             catch (Exception ex)
@@ -86,6 +90,7 @@ namespace PortBridge
 
         public void Dispose()
         {
+            this.open = false;
             lock (connectLock)
             {
                 DataChannelClose();
@@ -94,8 +99,12 @@ namespace PortBridge
 
         MultiplexedConnection CorrelateConnection(int connectionId, object state)
         {
-            MultiplexedTcpConnection connection = null;
-            connections.TryGetValue(connectionId, out connection);
+            MultiplexedTcpConnection connection;
+            lock (this.connectionLock)
+            {
+                connections.TryGetValue(connectionId, out connection);
+            }
+
             return connection;
         }
 
@@ -113,7 +122,7 @@ namespace PortBridge
                     try
                     {
                         bool endpointInPermittedRange = false;
-                        IPEndPoint remoteIPEndpoint = (IPEndPoint) tcpConnection.Client.RemoteEndPoint;
+                        IPEndPoint remoteIPEndpoint = (IPEndPoint)tcpConnection.Client.RemoteEndPoint;
                         foreach (IPRange range in firewallRules)
                         {
                             if (range.IsInRange(remoteIPEndpoint.Address))
@@ -125,6 +134,7 @@ namespace PortBridge
                         if (!endpointInPermittedRange)
                         {
                             Trace.TraceWarning("No matching firewall rule. Dropping connection from {0}", remoteIPEndpoint.Address);
+                            tcpConnection.Close();
                         }
                         else
                         {
@@ -151,7 +161,7 @@ namespace PortBridge
             catch (Exception ex)
             {
                 Trace.TraceError("Failure accepting client: {0}", ex.Message);
-                if (!didReschedule)
+                if (!didReschedule && this.open)
                 {
                     tcpListener.BeginAcceptTcpClient(ClientAccepted, null);
                 }
@@ -160,7 +170,7 @@ namespace PortBridge
 
         void MultiplexedConnectionClosed(object sender, EventArgs e)
         {
-            MultiplexedTcpConnection connection = (MultiplexedTcpConnection) sender;
+            MultiplexedTcpConnection connection = (MultiplexedTcpConnection)sender;
             lock (connectionLock)
             {
                 connections.Remove(connection.Id);

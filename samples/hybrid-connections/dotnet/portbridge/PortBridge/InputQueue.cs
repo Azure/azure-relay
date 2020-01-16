@@ -8,13 +8,6 @@ namespace PortBridge
     using System.Diagnostics;
     using System.Threading;
 
-    // ItemDequeuedCallback is called as an item is dequeued from the InputQueue.  The 
-    // InputQueue lock is not held during the callback.  However, the user code will
-    // not be notified of the item being available until the callback returns.  If you
-    // are not sure if the callback will block for a long time, then first call 
-    // IOThreadScheduler.ScheduleCallback to get to a "safe" thread.
-    public delegate void ItemDequeuedCallback();
-
     /// <summary>
     ///     Handles asynchronous interactions between producers and consumers.
     ///     Producers can dispatch available data to the input queue,
@@ -32,7 +25,7 @@ namespace PortBridge
         static WaitCallback completeWaitersFalseCallback;
         static WaitCallback completeWaitersTrueCallback;
         //Stores items that are waiting to be consumed.
-        readonly ItemQueue<T> itemQueue;
+        readonly ItemQueue itemQueue;
         //Each IQueueReader represents some consumer that is waiting for
         //items to appear in the queue. The readerQueue stores them
         //in an ordered list so consumers get serviced in a FIFO manner.
@@ -47,7 +40,7 @@ namespace PortBridge
 
         public InputQueue()
         {
-            itemQueue = new ItemQueue<T>();
+            itemQueue = new ItemQueue();
             readerQueue = new Queue<IQueueReader>();
             waiterList = new List<IQueueWaiter>();
             queueState = QueueState.Open;
@@ -69,16 +62,9 @@ namespace PortBridge
             get { return itemQueue; }
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-
-            GC.SuppressFinalize(this);
-        }
-
         public IAsyncResult BeginDequeue(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            Item<T> item = default(Item<T>);
+            Item item = default(Item);
 
             lock (ThisLock)
             {
@@ -143,22 +129,22 @@ namespace PortBridge
 
         static void CompleteOutstandingReadersCallback(object state)
         {
-            IQueueReader[] outstandingReaders = (IQueueReader[]) state;
+            IQueueReader[] outstandingReaders = (IQueueReader[])state;
 
             for (int i = 0; i < outstandingReaders.Length; i++)
             {
-                outstandingReaders[i].Set(default(Item<T>));
+                outstandingReaders[i].Set(default(Item));
             }
         }
 
         static void CompleteWaitersFalseCallback(object state)
         {
-            CompleteWaiters(false, (IQueueWaiter[]) state);
+            CompleteWaiters(false, (IQueueWaiter[])state);
         }
 
         static void CompleteWaitersTrueCallback(object state)
         {
-            CompleteWaiters(true, (IQueueWaiter[]) state);
+            CompleteWaiters(true, (IQueueWaiter[])state);
         }
 
         static void CompleteWaiters(bool itemAvailable, IQueueWaiter[] waiters)
@@ -206,10 +192,17 @@ namespace PortBridge
 
         public void Close()
         {
-            ((IDisposable) this).Dispose();
+            this.Dispose();
         }
 
         public void Shutdown()
+        {
+            this.Shutdown(null);
+        }
+
+        // Don't let any more items in. Differs from Close in that we keep around
+        // existing items in our itemQueue for possible future calls to Dequeue
+        public void Shutdown(Func<Exception> pendingExceptionGenerator)
         {
             IQueueReader[] outstandingReaders = null;
             lock (ThisLock)
@@ -238,7 +231,8 @@ namespace PortBridge
             {
                 for (int i = 0; i < outstandingReaders.Length; i++)
                 {
-                    outstandingReaders[i].Set(new Item<T>((Exception) null, null));
+                    Exception exception = (pendingExceptionGenerator != null) ? pendingExceptionGenerator() : null;
+                    outstandingReaders[i].Set(new Item(exception, null));
                 }
             }
         }
@@ -258,7 +252,7 @@ namespace PortBridge
         public bool Dequeue(TimeSpan timeout, out T value)
         {
             WaitQueueReader reader = null;
-            Item<T> item = new Item<T>();
+            Item item = new Item();
 
             lock (ThisLock)
             {
@@ -291,8 +285,9 @@ namespace PortBridge
                         return true;
                     }
                 }
-                else // queueState == QueueState.Closed
+                else
                 {
+                    // queueState == QueueState.Closed
                     value = default(T);
                     return true;
                 }
@@ -302,42 +297,40 @@ namespace PortBridge
             {
                 return reader.Wait(timeout, out value);
             }
-            InvokeDequeuedCallback(item.DequeuedCallback);
-            value = item.GetValue();
-            return true;
+            else
+            {
+                InvokeDequeuedCallback(item.DequeuedCallback);
+                value = item.GetValue();
+                return true;
+            }
         }
 
-        protected void Dispose(bool disposing)
+        public void Dispose()
         {
-            if (disposing)
-            {
-                bool dispose = false;
+            bool dispose = false;
 
-                lock (ThisLock)
+            lock (ThisLock)
+            {
+                if (queueState != QueueState.Closed)
                 {
-                    if (queueState != QueueState.Closed)
-                    {
-                        queueState = QueueState.Closed;
-                        dispose = true;
-                    }
+                    queueState = QueueState.Closed;
+                    dispose = true;
+                }
+            }
+
+            if (dispose)
+            {
+                while (readerQueue.Count > 0)
+                {
+                    IQueueReader reader = readerQueue.Dequeue();
+                    reader.Set(default(Item));
                 }
 
-                if (dispose)
+                while (itemQueue.HasAnyItem)
                 {
-                    while (readerQueue.Count > 0)
-                    {
-                        IQueueReader reader = readerQueue.Dequeue();
-                        reader.Set(default(Item<T>));
-                    }
-
-                    while (itemQueue.HasAnyItem)
-                    {
-                        Item<T> item = itemQueue.DequeueAnyItem();
-                        item.Dispose();
-                        InvokeDequeuedCallback(item.DequeuedCallback);
-                    }
-
-                    itemQueue.Close();
+                    Item item = itemQueue.DequeueAnyItem();
+                    DisposeItem(item);
+                    InvokeDequeuedCallback(item.DequeuedCallback);
                 }
             }
         }
@@ -345,7 +338,7 @@ namespace PortBridge
         public void Dispatch()
         {
             IQueueReader reader = null;
-            Item<T> item = new Item<T>();
+            Item item = new Item();
             IQueueReader[] outstandingReaders = null;
             IQueueWaiter[] waiters = null;
             bool itemAvailable = true;
@@ -440,24 +433,29 @@ namespace PortBridge
             EnqueueAndDispatch(item, null);
         }
 
-        public void EnqueueAndDispatch(T item, ItemDequeuedCallback dequeuedCallback)
+        // dequeuedCallback is called as an item is dequeued from the InputQueue.  The 
+        // InputQueue lock is not held during the callback.  However, the user code will
+        // not be notified of the item being available until the callback returns.  If you
+        // are not sure if the callback will block for a long time, then first call 
+        // IOThreadScheduler.ScheduleCallback to get to a "safe" thread.
+        public void EnqueueAndDispatch(T item, Action dequeuedCallback)
         {
             EnqueueAndDispatch(item, dequeuedCallback, true);
         }
 
-        public void EnqueueAndDispatch(Exception exception, ItemDequeuedCallback dequeuedCallback, bool canDispatchOnThisThread)
+        public void EnqueueAndDispatch(Exception exception, Action dequeuedCallback, bool canDispatchOnThisThread)
         {
-            Debug.Assert(exception != null, "exception parameter should not be null");
-            EnqueueAndDispatch(new Item<T>(exception, dequeuedCallback), canDispatchOnThisThread);
+            Debug.Assert(exception != null, "EnqueueAndDispatch: exception parameter should not be null");
+            EnqueueAndDispatch(new Item(exception, dequeuedCallback), canDispatchOnThisThread);
         }
 
-        public void EnqueueAndDispatch(T item, ItemDequeuedCallback dequeuedCallback, bool canDispatchOnThisThread)
+        public void EnqueueAndDispatch(T item, Action dequeuedCallback, bool canDispatchOnThisThread)
         {
-            Debug.Assert(item != null, "item parameter should not be null");
-            EnqueueAndDispatch(new Item<T>(item, dequeuedCallback), canDispatchOnThisThread);
+            Debug.Assert(item != null, "EnqueueAndDispatch: item parameter should not be null");
+            EnqueueAndDispatch(new Item(item, dequeuedCallback), canDispatchOnThisThread);
         }
 
-        void EnqueueAndDispatch(Item<T> item, bool canDispatchOnThisThread)
+        void EnqueueAndDispatch(Item item, bool canDispatchOnThisThread)
         {
             bool disposeItem = false;
             IQueueReader reader = null;
@@ -465,10 +463,8 @@ namespace PortBridge
             IQueueWaiter[] waiters = null;
             bool itemAvailable = true;
 
-            try
+            lock (ThisLock)
             {
-                Monitor.Enter(ThisLock);
-
                 itemAvailable = !((queueState == QueueState.Closed) || (queueState == QueueState.Shutdown));
                 GetWaiters(out waiters);
 
@@ -478,15 +474,6 @@ namespace PortBridge
                     {
                         if (readerQueue.Count == 0)
                         {
-                            try
-                            {
-                                Monitor.Exit(ThisLock);
-                                itemQueue.AcquireThrottle();
-                            }
-                            finally
-                            {
-                                Monitor.Enter(ThisLock);
-                            }
                             itemQueue.EnqueueAvailableItem(item);
                         }
                         else
@@ -498,41 +485,20 @@ namespace PortBridge
                     {
                         if (readerQueue.Count == 0)
                         {
-                            try
-                            {
-                                Monitor.Exit(ThisLock);
-                                itemQueue.AcquireThrottle();
-                            }
-                            finally
-                            {
-                                Monitor.Enter(ThisLock);
-                            }
                             itemQueue.EnqueueAvailableItem(item);
                         }
                         else
                         {
-                            try
-                            {
-                                Monitor.Exit(ThisLock);
-                                itemQueue.AcquireThrottle();
-                            }
-                            finally
-                            {
-                                Monitor.Enter(ThisLock);
-                            }
                             itemQueue.EnqueuePendingItem(item);
                             dispatchLater = true;
                         }
                     }
                 }
-                else // queueState == QueueState.Closed || queueState == QueueState.Shutdown
+                else
                 {
+                    // queueState == QueueState.Closed || queueState == QueueState.Shutdown
                     disposeItem = true;
                 }
-            }
-            finally
-            {
-                Monitor.Exit(ThisLock);
             }
 
             if (waiters != null)
@@ -565,78 +531,55 @@ namespace PortBridge
             else if (disposeItem)
             {
                 InvokeDequeuedCallback(item.DequeuedCallback);
-                item.Dispose();
+                DisposeItem(item);
             }
         }
 
-        public bool EnqueueWithoutDispatch(T item, ItemDequeuedCallback dequeuedCallback)
+        public bool EnqueueWithoutDispatch(T item, Action dequeuedCallback)
         {
             Debug.Assert(item != null, "EnqueueWithoutDispatch: item parameter should not be null");
-            return EnqueueWithoutDispatch(new Item<T>(item, dequeuedCallback));
+            return EnqueueWithoutDispatch(new Item(item, dequeuedCallback));
         }
 
-        public bool EnqueueWithoutDispatch(Exception exception, ItemDequeuedCallback dequeuedCallback)
+        public bool EnqueueWithoutDispatch(Exception exception, Action dequeuedCallback)
         {
             Debug.Assert(exception != null, "EnqueueWithoutDispatch: exception parameter should not be null");
-            return EnqueueWithoutDispatch(new Item<T>(exception, dequeuedCallback));
+            return EnqueueWithoutDispatch(new Item(exception, dequeuedCallback));
         }
 
         // This will not block, however, Dispatch() must be called later if this function
         // returns true.
-        bool EnqueueWithoutDispatch(Item<T> item)
+        bool EnqueueWithoutDispatch(Item item)
         {
-            try
+            lock (ThisLock)
             {
-                Monitor.Enter(ThisLock);
                 // Open
                 if (queueState != QueueState.Closed && queueState != QueueState.Shutdown)
                 {
-                    if (readerQueue.Count == 0)
+                    if (readerQueue.Count == 0 && waiterList.Count == 0)
                     {
-                        try
-                        {
-                            Monitor.Exit(ThisLock);
-                            itemQueue.AcquireThrottle();
-                        }
-                        finally
-                        {
-                            Monitor.Enter(ThisLock);
-                        }
                         itemQueue.EnqueueAvailableItem(item);
                         return false;
                     }
                     else
                     {
-                        try
-                        {
-                            Monitor.Exit(ThisLock);
-                            itemQueue.AcquireThrottle();
-                        }
-                        finally
-                        {
-                            Monitor.Enter(ThisLock);
-                        }
                         itemQueue.EnqueuePendingItem(item);
                         return true;
                     }
                 }
             }
-            finally
-            {
-                Monitor.Exit(ThisLock);
-            }
 
-            item.Dispose();
+            DisposeItem(item);
             InvokeDequeuedCallbackLater(item.DequeuedCallback);
             return false;
         }
 
         static void OnDispatchCallback(object state)
         {
-            ((InputQueue<T>) state).Dispatch();
+            ((InputQueue<T>)state).Dispatch();
         }
 
-        static void InvokeDequeuedCallbackLater(ItemDequeuedCallback dequeuedCallback)
+        static void InvokeDequeuedCallbackLater(Action dequeuedCallback)
         {
             if (dequeuedCallback != null)
             {
@@ -649,7 +592,7 @@ namespace PortBridge
             }
         }
 
-        static void InvokeDequeuedCallback(ItemDequeuedCallback dequeuedCallback)
+        static void InvokeDequeuedCallback(Action dequeuedCallback)
         {
             if (dequeuedCallback != null)
             {
@@ -659,12 +602,18 @@ namespace PortBridge
 
         static void OnInvokeDequeuedCallback(object state)
         {
-            ItemDequeuedCallback dequeuedCallback = (ItemDequeuedCallback) state;
+            Debug.Assert(state != null, "InputQueue.OnInvokeDequeuedCallback: (state != null)");
+
+            Action dequeuedCallback = (Action)state;
             dequeuedCallback();
         }
 
+        // Used for timeouts. The InputQueue must remove readers from its reader queue to prevent
+        // dispatching items to timed out readers.
         bool RemoveReader(IQueueReader reader)
         {
+            Debug.Assert(reader != null, "InputQueue.RemoveReader: (reader != null)");
+
             lock (ThisLock)
             {
                 if (queueState == QueueState.Open || queueState == QueueState.Shutdown)
@@ -674,7 +623,7 @@ namespace PortBridge
                     for (int i = readerQueue.Count; i > 0; i--)
                     {
                         IQueueReader temp = readerQueue.Dequeue();
-                        if (ReferenceEquals(temp, reader))
+                        if (object.ReferenceEquals(temp, reader))
                         {
                             removed = true;
                         }
@@ -723,11 +672,12 @@ namespace PortBridge
                     }
                     else
                     {
-                        return false;
+                        return true;
                     }
                 }
-                else // queueState == QueueState.Closed
+                else
                 {
+                    // queueState == QueueState.Closed
                     return true;
                 }
             }
@@ -736,7 +686,23 @@ namespace PortBridge
             {
                 return waiter.Wait(timeout);
             }
-            return itemAvailable;
+            else
+            {
+                return itemAvailable;
+            }
+        }
+
+        void DisposeItem(Item item)
+        {
+            T value = item.Value;
+            if (value != null)
+            {
+                IDisposable disposableValue = value as IDisposable;
+                if (disposableValue != null)
+                {
+                    disposableValue.Dispose();
+                }
+            }
         }
 
         class AsyncQueueReader : AsyncResult, IQueueReader
@@ -753,36 +719,40 @@ namespace PortBridge
                 this.inputQueue = inputQueue;
                 if (timeout != TimeSpan.MaxValue)
                 {
-                    timer = new Timer(timerCallback, this, timeout, TimeSpan.FromMilliseconds(-1));
+                    timer = new Timer(timerCallback, this, Timeout.Infinite, Timeout.Infinite);
+                    timer.Change(timeout, Timeout.InfiniteTimeSpan);
                 }
             }
 
-            public void Set(Item<T> item)
+            public void Set(Item inputItem)
             {
-                this.item = item.Value;
-                if (timer != null)
+                this.item = inputItem.Value;
+                if (this.timer != null)
                 {
-                    timer.Change(-1, -1);
+                    this.timer.Change(Timeout.Infinite, Timeout.Infinite);
                 }
-                Complete(false, item.Exception);
+                Complete(false, inputItem.Exception);
             }
 
             public static bool End(IAsyncResult result, out T value)
             {
-                AsyncQueueReader readerResult = End<AsyncQueueReader>(result);
+                AsyncQueueReader readerResult = AsyncResult.End<AsyncQueueReader>(result);
 
                 if (readerResult.expired)
                 {
                     value = default(T);
                     return false;
                 }
-                value = readerResult.item;
-                return true;
+                else
+                {
+                    value = readerResult.item;
+                    return true;
+                }
             }
 
             static void TimerCallback(object state)
             {
-                AsyncQueueReader thisPtr = (AsyncQueueReader) state;
+                AsyncQueueReader thisPtr = (AsyncQueueReader)state;
                 if (thisPtr.inputQueue.RemoveReader(thisPtr))
                 {
                     thisPtr.expired = true;
@@ -801,20 +771,27 @@ namespace PortBridge
             {
                 if (timeout != TimeSpan.MaxValue)
                 {
-                    timer = new Timer(timerCallback, this, timeout, TimeSpan.FromMilliseconds(-1));
+                    timer = new Timer(timerCallback, this, Timeout.Infinite, Timeout.Infinite);
+                    timer.Change(timeout, Timeout.InfiniteTimeSpan);
                 }
             }
 
-            object ThisLock { get; } = new object();
-
-            public void Set(bool itemAvailable)
+            public void Set(bool currentItemAvailable)
             {
                 bool timely;
 
                 lock (ThisLock)
                 {
-                    timely = (timer == null) || timer.Change(-1, -1);
-                    this.itemAvailable = itemAvailable;
+                    if (this.timer == null)
+                    {
+                        timely = true;
+                    }
+                    else
+                    {
+                        this.timer.Change(Timeout.Infinite, Timeout.Infinite);
+                        timely = !this.IsCompleted;
+                    }
+                    this.itemAvailable = currentItemAvailable;
                 }
 
                 if (timely)
@@ -831,14 +808,14 @@ namespace PortBridge
 
             static void TimerCallback(object state)
             {
-                AsyncQueueWaiter thisPtr = (AsyncQueueWaiter) state;
+                AsyncQueueWaiter thisPtr = (AsyncQueueWaiter)state;
                 thisPtr.Complete(false);
             }
         }
 
         interface IQueueReader
         {
-            void Set(Item<T> item);
+            void Set(Item item);
         }
 
         interface IQueueWaiter
@@ -853,7 +830,7 @@ namespace PortBridge
             Closed
         }
 
-        class WaitQueueReader : IQueueReader
+        class WaitQueueReader : IQueueReader, IDisposable
         {
             readonly InputQueue<T> inputQueue;
             readonly ManualResetEvent waitEvent;
@@ -866,17 +843,17 @@ namespace PortBridge
                 waitEvent = new ManualResetEvent(false);
             }
 
-            object ThisLock { get; } = new object();
+            object ThisLock => this.waitEvent;
 
-            public void Set(Item<T> item)
+            public void Set(Item newItem)
             {
                 lock (ThisLock)
                 {
                     Debug.Assert(this.item == null, "InputQueue.WaitQueueReader.Set: (this.item == null)");
                     Debug.Assert(exception == null, "InputQueue.WaitQueueReader.Set: (this.exception == null)");
 
-                    exception = item.Exception;
-                    this.item = item.Value;
+                    this.exception = newItem.Exception;
+                    this.item = newItem.Value;
                     waitEvent.Set();
                 }
             }
@@ -914,12 +891,23 @@ namespace PortBridge
                     }
                 }
 
+                if (this.exception != null)
+                {
+                    throw this.exception;
+                }
+
                 value = item;
                 return true;
             }
+
+            public void Dispose()
+            {
+                this.waitEvent.Dispose();
+                GC.SuppressFinalize(this);
+            }
         }
 
-        class WaitQueueWaiter : IQueueWaiter
+        class WaitQueueWaiter : IQueueWaiter, IDisposable
         {
             readonly ManualResetEvent waitEvent;
             bool itemAvailable;
@@ -929,7 +917,7 @@ namespace PortBridge
                 waitEvent = new ManualResetEvent(false);
             }
 
-            object ThisLock { get; } = new object();
+            object ThisLock => this.waitEvent;
 
             public void Set(bool itemAvailable)
             {
@@ -953,154 +941,151 @@ namespace PortBridge
 
                 return itemAvailable;
             }
-        }
-    }
 
-    public struct Item<T> where T : class
-    {
-        public Item(T value, ItemDequeuedCallback dequeuedCallback)
-            : this(value, null, dequeuedCallback)
-        {
-        }
-
-        public Item(Exception exception, ItemDequeuedCallback dequeuedCallback)
-            : this(null, exception, dequeuedCallback)
-        {
-        }
-
-        Item(T value, Exception exception, ItemDequeuedCallback dequeuedCallback)
-        {
-            Value = value;
-            Exception = exception;
-            DequeuedCallback = dequeuedCallback;
-        }
-
-        public Exception Exception { get; }
-        public T Value { get; }
-        public ItemDequeuedCallback DequeuedCallback { get; }
-
-        public void Dispose()
-        {
-            if (Value != null)
+            public void Dispose()
             {
-                if (Value is IDisposable)
+                this.waitEvent.Close();
+                GC.SuppressFinalize(this);
+            }
+        }
+
+        struct Item
+        {
+            Action dequeuedCallback;
+            Exception exception;
+            T value;
+
+            public Item(T value, Action dequeuedCallback)
+                : this(value, null, dequeuedCallback)
+            {
+            }
+
+            public Item(Exception exception, Action dequeuedCallback)
+                : this(null, exception, dequeuedCallback)
+            {
+            }
+
+            Item(T value, Exception exception, Action dequeuedCallback)
+            {
+                this.value = value;
+                this.exception = exception;
+                this.dequeuedCallback = dequeuedCallback;
+            }
+
+            public Exception Exception => this.exception;
+            public T Value => this.value;
+            public Action DequeuedCallback => dequeuedCallback;
+
+            public T GetValue()
+            {
+                if (this.exception != null)
                 {
-                    ((IDisposable) Value).Dispose();
+                    throw this.exception;
                 }
+
+                return this.value;
             }
         }
 
-        public T GetValue()
+        class ItemQueue
         {
-            if (Exception != null)
+            int head;
+            Item[] items;
+            int pendingCount;
+            int totalCount;
+
+            public ItemQueue()
             {
-                throw Exception;
+                this.items = new Item[1];
             }
 
-            return Value;
-        }
-    }
-
-    public class ItemQueue<T> where T : class
-    {
-        int head;
-        Item<T>[] items;
-        int pendingCount;
-
-        public ItemQueue()
-        {
-            items = new Item<T>[1];
-        }
-
-        public bool HasAvailableItem
-        {
-            get { return ItemCount > pendingCount; }
-        }
-
-        public bool HasAnyItem
-        {
-            get { return ItemCount > 0; }
-        }
-
-        public int ItemCount { get; set; }
-
-        public virtual void Close()
-        {
-        }
-
-        public Item<T> DequeueAvailableItem()
-        {
-            if (ItemCount == pendingCount)
+            public bool HasAvailableItem
             {
-                Debug.Assert(false, "ItemQueue does not contain any available items");
-                throw new Exception("Internal Error");
+                get { return this.totalCount > this.pendingCount; }
             }
-            return DequeueItemCore();
-        }
 
-        public Item<T> DequeueAnyItem()
-        {
-            if (pendingCount == ItemCount)
+            public bool HasAnyItem
             {
-                pendingCount--;
+                get { return this.totalCount > 0; }
             }
-            return DequeueItemCore();
-        }
 
-        internal virtual void EnqueueItemCore(Item<T> item)
-        {
-            if (ItemCount == items.Length)
+            public int ItemCount
             {
-                Item<T>[] newItems = new Item<T>[items.Length*2];
-                for (int i = 0; i < ItemCount; i++)
+                get { return this.totalCount; }
+            }
+
+            public Item DequeueAvailableItem()
+            {
+                if (ItemCount == pendingCount)
                 {
-                    newItems[i] = items[(head + i)%items.Length];
+                    Debug.Assert(false, "ItemQueue does not contain any available items");
+                    throw new Exception("Internal Error");
                 }
-                head = 0;
-                items = newItems;
-            }
-            int tail = (head + ItemCount)%items.Length;
-            items[tail] = item;
-            ItemCount++;
-        }
 
-        internal virtual Item<T> DequeueItemCore()
-        {
-            if (ItemCount == 0)
+                return DequeueItemCore();
+            }
+
+            public Item DequeueAnyItem()
             {
-                Debug.Assert(false, "ItemQueue does not contain any items");
-                throw new Exception("Internal Error");
+                if (this.pendingCount == this.totalCount)
+                {
+                    this.pendingCount--;
+                }
+                return DequeueItemCore();
             }
-            Item<T> item = items[head];
-            items[head] = new Item<T>();
-            ItemCount--;
-            head = (head + 1)%items.Length;
-            return item;
-        }
 
-        public void EnqueuePendingItem(Item<T> item)
-        {
-            EnqueueItemCore(item);
-            pendingCount++;
-        }
-
-        public void EnqueueAvailableItem(Item<T> item)
-        {
-            EnqueueItemCore(item);
-        }
-
-        public void MakePendingItemAvailable()
-        {
-            if (pendingCount == 0)
+            void EnqueueItemCore(Item item)
             {
-                Debug.Assert(false, "ItemQueue does not contain any pending items");
-                throw new Exception("Internal Error");
+                if (this.totalCount == this.items.Length)
+                {
+                    Item[] newItems = new Item[this.items.Length * 2];
+                    for (int i = 0; i < this.totalCount; i++)
+                    {
+                        newItems[i] = this.items[(head + i) % this.items.Length];
+                    }
+                    this.head = 0;
+                    this.items = newItems;
+                }
+                int tail = (this.head + this.totalCount) % this.items.Length;
+                this.items[tail] = item;
+                this.totalCount++;
             }
-            pendingCount--;
-        }
 
-        internal virtual void AcquireThrottle()
-        {
+            Item DequeueItemCore()
+            {
+                if (ItemCount == 0)
+                {
+                    Debug.Assert(false, "ItemQueue does not contain any items");
+                    throw new Exception("Internal Error");
+                }
+
+                Item item = this.items[this.head];
+                this.items[this.head] = new Item();
+                this.totalCount--;
+                this.head = (this.head + 1) % this.items.Length;
+                return item;
+            }
+
+            public void EnqueuePendingItem(Item item)
+            {
+                EnqueueItemCore(item);
+                this.pendingCount++;
+            }
+
+            public void EnqueueAvailableItem(Item item)
+            {
+                EnqueueItemCore(item);
+            }
+
+            public void MakePendingItemAvailable()
+            {
+                if (pendingCount == 0)
+                {
+                    Debug.Assert(false, "ItemQueue does not contain any pending items");
+                    throw new Exception("Internal Error");
+                }
+                this.pendingCount--;
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ namespace PortBridge
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
+    using System.Net;
     using System.Net.Sockets;
     using System.Threading;
 
@@ -31,7 +32,8 @@ namespace PortBridge
             this.connectionFactory = connectionFactory;
             connections = new Dictionary<int, MultiplexedConnection>();
             inputBuffer = new byte[65536];
-            preambleBuffer = new byte[sizeof (int) + sizeof (ushort)];
+            // Each frame is prefixed with a 32-bit connectionId and a 16-bit length value.
+            preambleBuffer = new byte[sizeof(int) + sizeof(ushort)];
             stopInput = new ManualResetEvent(false);
         }
 
@@ -66,28 +68,24 @@ namespace PortBridge
                 int bytesRead = bufferRead.EndInvoke(readOutputAsyncResult);
                 if (bytesRead > 0)
                 {
-                    if (bytesRead == 1)
+                    if (bytesRead < preambleBuffer.Length)
                     {
-                        bytesRead += bufferRead(preambleBuffer, 1, preambleBuffer.Length - 1);
+                        // In case read returned a partial frame preamble ensure that the full 6 bytes are received
+                        bytesRead += this.ReadCountBytes(preambleBuffer, bytesRead, preambleBuffer.Length - bytesRead, "Frame Preamble");
                     }
 #if VERBOSE
                     Trace.TraceInformation("Input, read preamble: {0}", bytesRead);
 #endif
 
                     int connectionId = BitConverter.ToInt32(preambleBuffer, 0);
-                    ushort frameSize = BitConverter.ToUInt16(preambleBuffer, sizeof (Int32));
+                    ushort frameSize = BitConverter.ToUInt16(preambleBuffer, sizeof(Int32));
 
                     // we have to get the frame off the wire irrespective of 
                     // whether we can dispatch it
                     if (frameSize > 0)
                     {
                         // read the block synchronously
-                        bytesRead = 0;
-                        do
-                        {
-                            bytesRead += bufferRead(inputBuffer, bytesRead, frameSize - bytesRead);
-                        }
-                        while (bytesRead < frameSize);
+                        bytesRead = this.ReadCountBytes(inputBuffer, 0, frameSize, "Frame Payload");
 #if VERBOSE
                         Trace.TraceInformation("Input, read data {0}", frameSize);
 #endif
@@ -135,7 +133,7 @@ namespace PortBridge
                                 {
                                     Trace.TraceInformation(
                                         "Socket cancelled with code {0} during pending read: {1}",
-                                        ((SocketException) ioe.InnerException).ErrorCode,
+                                        ((SocketException) ioe.InnerException).SocketErrorCode,
                                         ioe.Message);
                                 }
                                 else
@@ -181,13 +179,36 @@ namespace PortBridge
             }
         }
 
+        /// <summary>
+        /// Reads the given count of bytes from the bufferRead delegate into the given buffer.
+        /// A ProtocolViolationException will be thrown if the stream read returns 0.
+        /// </summary>
+        /// <param name="buffer">The destination buffer that bytes get copied to</param>
+        /// <param name="offset">The zero-based byte offset in buffer at which to begin storing the data.</param>
+        /// <param name="requiredCount">The required number of bytes to be read from the current bufferRead delegate.</param>
+        /// <param name="stepName">The name of the step for reporting if reading unexpectedly returns 0 bytes.</param>
+        /// <returns>The count of bytes read for programming convenience. Will always be the same as <paramref name="requiredCount"/>.</returns>
+        int ReadCountBytes(byte[] buffer, int offset, int requiredCount, string stepName)
+        {
+            int totalBytesRead = 0;
+            do
+            {
+                int bytesRead = this.bufferRead(buffer, offset + totalBytesRead, requiredCount - totalBytesRead);
+                totalBytesRead += bytesRead;
+                if (bytesRead == 0)
+                {
+                    throw new ProtocolViolationException($"Unexpected end of stream while reading {stepName}.");
+                }
+            }
+            while (totalBytesRead < requiredCount);
+
+            return totalBytesRead;
+        }
+
         void OnCompleted()
         {
             Close();
-            if (Completed != null)
-            {
-                Completed(this, new EventArgs());
-            }
+            this.Completed?.Invoke(this, EventArgs.Empty);
         }
     }
 
