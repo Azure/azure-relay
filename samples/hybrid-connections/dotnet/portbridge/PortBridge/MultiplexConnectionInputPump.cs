@@ -68,32 +68,24 @@ namespace PortBridge
                 int bytesRead = bufferRead.EndInvoke(readOutputAsyncResult);
                 if (bytesRead > 0)
                 {
-                    while (bytesRead < preambleBuffer.Length)
+                    if (bytesRead < preambleBuffer.Length)
                     {
-                        int newBytesRead = this.bufferRead(preambleBuffer, bytesRead, preambleBuffer.Length - bytesRead);
-                        CheckForEndOfStream(newBytesRead, "Unexpected EOF while reading preamble");
-                        bytesRead += newBytesRead;
+                        // In case read returned a partial frame preamble ensure that the full 6 bytes are received
+                        bytesRead += this.ReadCountBytes(preambleBuffer, bytesRead, preambleBuffer.Length - bytesRead, "Frame Preamble");
                     }
 #if VERBOSE
                     Trace.TraceInformation("Input, read preamble: {0}", bytesRead);
 #endif
 
                     int connectionId = BitConverter.ToInt32(preambleBuffer, 0);
-                    ushort frameSize = BitConverter.ToUInt16(preambleBuffer, sizeof (Int32));
+                    ushort frameSize = BitConverter.ToUInt16(preambleBuffer, sizeof(Int32));
 
                     // we have to get the frame off the wire irrespective of 
                     // whether we can dispatch it
                     if (frameSize > 0)
                     {
                         // read the block synchronously
-                        bytesRead = 0;
-                        do
-                        {
-                            int newBytesRead = this.bufferRead(inputBuffer, bytesRead, frameSize - bytesRead);
-                            CheckForEndOfStream(newBytesRead, "Unexpected EOF while reading frame payload");
-                            bytesRead += newBytesRead;
-                        }
-                        while (bytesRead < frameSize);
+                        bytesRead = this.ReadCountBytes(inputBuffer, 0, frameSize, "Frame Payload");
 #if VERBOSE
                         Trace.TraceInformation("Input, read data {0}", frameSize);
 #endif
@@ -187,12 +179,30 @@ namespace PortBridge
             }
         }
 
-        static void CheckForEndOfStream(int bytesRead, string message)
+        /// <summary>
+        /// Reads the given count of bytes from the bufferRead delegate into the given buffer.
+        /// A ProtocolViolationException will be thrown if the stream read returns 0.
+        /// </summary>
+        /// <param name="buffer">The destination buffer that bytes get copied to</param>
+        /// <param name="offset">The zero-based byte offset in buffer at which to begin storing the data.</param>
+        /// <param name="requiredCount">The required number of bytes to be read from the current bufferRead delegate.</param>
+        /// <param name="stepName">The name of the step for reporting if reading unexpectedly returns 0 bytes.</param>
+        /// <returns>The count of bytes read for programming convenience. Will always be the same as <paramref name="requiredCount"/>.</returns>
+        int ReadCountBytes(byte[] buffer, int offset, int requiredCount, string stepName)
         {
-            if (bytesRead == 0)
+            int totalBytesRead = 0;
+            do
             {
-                throw new ProtocolViolationException(message);
+                int bytesRead = this.bufferRead(buffer, offset + totalBytesRead, requiredCount - totalBytesRead);
+                totalBytesRead += bytesRead;
+                if (bytesRead == 0)
+                {
+                    throw new ProtocolViolationException($"Unexpected end of stream while reading {stepName}.");
+                }
             }
+            while (totalBytesRead < requiredCount);
+
+            return totalBytesRead;
         }
 
         void OnCompleted()
