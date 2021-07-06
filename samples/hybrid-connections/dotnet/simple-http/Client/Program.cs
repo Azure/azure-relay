@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Relay;
-using System.Net.Http;
 
 namespace Client
 {
@@ -14,14 +14,14 @@ namespace Client
             RunAsync(args).GetAwaiter().GetResult();
         }
 
-       static async Task RunAsync(string[] args)
+        static async Task RunAsync(string[] args)
         {
             if (args.Length < 4)
             {
                 Console.WriteLine("dotnet client [ns] [hc] [keyname] [key]");
                 return;
             }
-            
+
             var ns = args[0];
             var hc = args[1];
             var keyname = args[2];
