@@ -37,6 +37,7 @@ namespace Server
             // Provide an HTTP request handler
             listener.RequestHandler = async (context) =>
             {
+                // Do something with context.Request.Url, HttpMethod, Headers, InputStream...
                 Console.WriteLine();
                 Console.WriteLine("=====HEADERS=====");
                 Console.WriteLine(context.Request.Headers.ToString());
@@ -46,7 +47,6 @@ namespace Server
                     Console.WriteLine(await sr.ReadToEndAsync());
                 }
 
-                // Do something with context.Request.Url, HttpMethod, Headers, InputStream...
                 context.Response.StatusCode = HttpStatusCode.OK;
                 context.Response.StatusDescription = "OK";
                 using (var sw = new StreamWriter(context.Response.OutputStream))
