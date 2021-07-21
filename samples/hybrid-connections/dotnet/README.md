@@ -23,3 +23,7 @@ build a simple reverse proxy that allows exposing existing web sites and service
 the Relay.
 - [**ASP.NET**](./aspnet/README.md) - The ASP.NET sample is an hosting extension for 
 ASP.NET Core, allowing ASP.NET Core based sites and services to be hosted behind the Relay.
+
+## RBAC sample
+
+- [**RBAC Hybrid Connections**](./rolebasedaccesscontrol/README.md) - A sample illustrating how to create a Relay Sender and a Relay Listener instances with Managed Identities and AAD RBAC Authentication methods.
