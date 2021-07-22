@@ -120,7 +120,7 @@ namespace RoleBasedAccessControl
 
         /***********************************************************************
         * The code below is not specific to Role Based Access Control. 
-        * Once the TokenProvider instance is created, they can work with either RBAC or SAS
+        * The code below can work with any Microsoft.ServiceBus.TokenProvider.
         ***********************************************************************/
 
         static async Task RunWcfSampleAsync(string hostAddress, string wcfRelayName, TokenProvider tokenProvider, Binding binding)
