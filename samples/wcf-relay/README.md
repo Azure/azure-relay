@@ -125,3 +125,6 @@ browser clients, to transparently interact with the HTTP service without having 
 ## General Samples
 *  **RelayConnnectionStatus** - The [RelayConnectionStatus](RelayConnectionStatus) sample shows how to monitor the status of a Relay listener 
 when network failures occur, and how to manage opening the listener host should there be no network connectivity at startup time. 
+
+## RBAC Sample
+*  **RBAC WCF Relays** - The [RBAC WCF Relays](./RoleBasedAccessControl) sample shows how to create WCF Relay Sender and WCF Relay Listener instances with Managed Identities and AAD RBAC Authentication methods.
