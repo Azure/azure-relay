@@ -118,6 +118,11 @@ namespace RoleBasedAccessControl
                 $"https://login.microsoftonline.com/{tenantId}");
         }
 
+        /***********************************************************************
+        * The code below is not specific to Role Based Access Control. 
+        * Once the TokenProvider instance is created, they can work with either RBAC or SAS
+        ***********************************************************************/
+
         static async Task RunWcfSampleAsync(string hostAddress, string wcfRelayName, TokenProvider tokenProvider, Binding binding)
         {
             var namespaceManager = new NamespaceManager(hostAddress, tokenProvider);
@@ -274,11 +279,6 @@ namespace RoleBasedAccessControl
                 SafeClose(channelFactory);
             }
         }
-
-        /***********************************************************************
-        * The methods below are not related to Role Based Access Control. 
-        * They are only needed to ensure this sample application runs smoothly.
-        ***********************************************************************/
 
         static RelayType GetRelayType(Binding binding)
         {
