@@ -199,51 +199,6 @@ namespace RoleBasedAccessControl
             }
         }
 
-        static RelayType GetRelayType(Binding binding)
-        {
-            if (binding is NetTcpRelayBinding)
-            {
-                return RelayType.NetTcp;
-            }
-            else if (binding is NetOnewayRelayBinding)
-            {
-                return RelayType.NetOneway;
-            }
-            else if (binding is NetEventRelayBinding)
-            {
-                return RelayType.NetEvent;
-            }
-            else if (binding is BasicHttpRelayBinding || binding is WebHttpRelayBinding || binding is WSHttpRelayBinding)
-            {
-                return RelayType.Http;
-            }
-
-            throw new ArgumentException($"Unrecognized Relay binding type: {binding.GetType()}");
-        }
-
-        static void SafeClose(ICommunicationObject communicationObject)
-        {
-            if (communicationObject == null || communicationObject.State == CommunicationState.Closed)
-            {
-                return;
-            }
-
-            try
-            {
-                if (communicationObject.State != CommunicationState.Faulted)
-                {
-                    communicationObject.Close();
-                    return;
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Error closing {communicationObject.GetType()}: {e}");
-            }
-
-            communicationObject.Abort();
-        }
-
         static void CreateAndSendWithChannel(Uri address, TokenProvider tokenProvider, Binding binding)
         {
             if (binding is NetTcpRelayBinding || binding is BasicHttpRelayBinding || binding is WSHttpRelayBinding)
@@ -318,6 +273,56 @@ namespace RoleBasedAccessControl
                 SafeClose(client);
                 SafeClose(channelFactory);
             }
+        }
+
+        /***********************************************************************
+        * The methods below are not related to Role Based Access Control. 
+        * They are only needed to ensure this sample application runs smoothly.
+        ***********************************************************************/
+
+        static RelayType GetRelayType(Binding binding)
+        {
+            if (binding is NetTcpRelayBinding)
+            {
+                return RelayType.NetTcp;
+            }
+            else if (binding is NetOnewayRelayBinding)
+            {
+                return RelayType.NetOneway;
+            }
+            else if (binding is NetEventRelayBinding)
+            {
+                return RelayType.NetEvent;
+            }
+            else if (binding is BasicHttpRelayBinding || binding is WebHttpRelayBinding || binding is WSHttpRelayBinding)
+            {
+                return RelayType.Http;
+            }
+
+            throw new ArgumentException($"Unrecognized Relay binding type: {binding.GetType()}");
+        }
+
+        static void SafeClose(ICommunicationObject communicationObject)
+        {
+            if (communicationObject == null || communicationObject.State == CommunicationState.Closed)
+            {
+                return;
+            }
+
+            try
+            {
+                if (communicationObject.State != CommunicationState.Faulted)
+                {
+                    communicationObject.Close();
+                    return;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error closing {communicationObject.GetType()}: {e}");
+            }
+
+            communicationObject.Abort();
         }
 
         static void DisableHttpHelpPage(ServiceHost serviceHost)
