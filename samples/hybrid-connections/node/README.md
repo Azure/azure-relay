@@ -26,3 +26,12 @@ examples first:
 
 * [Simple Sender and Listener](./hyco-ws-simple)
 * [Web-Site embedded client](./hyco-ws-serverstats)
+
+## Role Based Access Control Examples
+
+To learn how to use the RBAC (Role Based Access Control) mechanism as an option to authenticate,
+please look at these samples, based on which module you are using:
+
+* [RBAC Authentication For HYCO-HTTPS](./rolebasedaccesscontrol/hyco-https)
+* [RBAC Authentication For HYCO-WEBSOCKET](./rolebasedaccesscontrol/hyco-websocket)
+* [RBAC Authentication For HYCO-WS](./rolebasedaccesscontrol/hyco-ws)
