@@ -9,7 +9,7 @@
     <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure-relay</artifactId>
-      <version>0.0.3</version>
+      <version>0.0.4</version>
     </dependency>
   </dependencies>
   
