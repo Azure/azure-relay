@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@azure/identity": "^2.0.1",
+    "hyco-https": "^1.4.5",
+    "hyco-websocket": "^1.0.5",
+    "hyco-ws": "^1.0.5"
+  }
+}
