@@ -15,6 +15,7 @@ This repository is intended to be used for:
 If you are looking for the code of specific client library, follow these links:
 * [.NET](https://github.com/azure/azure-relay-dotnet)
 * [.Node](https://github.com/azure/azure-relay-node)
+* [Java](https://github.com/Azure/azure-relay-java)
 
 ## How to provide feedback
 
