@@ -78,11 +78,6 @@ namespace Microsoft.Azure.Relay.ReverseProxy
             
             foreach (KeyValuePair<string, IEnumerable<string>> header in responseMessage.Content.Headers)
             {
-                if (string.Equals(header.Key, "Transfer-Encoding"))
-                {
-                    continue;
-                }
-
                 context.Response.Headers.Add(header.Key, string.Join(",", header.Value));
             }
 
