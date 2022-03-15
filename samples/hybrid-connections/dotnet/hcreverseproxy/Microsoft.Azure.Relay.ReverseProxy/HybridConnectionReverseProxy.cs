@@ -75,6 +75,16 @@ namespace Microsoft.Azure.Relay.ReverseProxy
 
                 context.Response.Headers.Add(header.Key, string.Join(",", header.Value));
             }
+            
+            foreach (KeyValuePair<string, IEnumerable<string>> header in responseMessage.Content.Headers)
+            {
+                if (string.Equals(header.Key, "Transfer-Encoding"))
+                {
+                    continue;
+                }
+
+                context.Response.Headers.Add(header.Key, string.Join(",", header.Value));
+            }
 
             var responseStream = await responseMessage.Content.ReadAsStreamAsync();
             await responseStream.CopyToAsync(context.Response.OutputStream);
