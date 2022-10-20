@@ -104,7 +104,7 @@ namespace Microsoft.Azure.Relay.ReverseProxy
                 string contentType = context.Request.Headers[HttpRequestHeader.ContentType];
                 if (!string.IsNullOrEmpty(contentType))
                 {
-                    requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+                    requestMessage.Content.Headers.TryAddWithoutValidation("Content-Type", contentType);
                 }
             }
 
