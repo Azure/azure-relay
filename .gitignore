@@ -305,3 +305,6 @@ target
 
 # Windows #
 Thumbs.db
+
+# NuGet #
+.nuget/
