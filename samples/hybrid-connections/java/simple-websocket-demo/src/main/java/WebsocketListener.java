@@ -27,11 +27,10 @@ public class WebsocketListener {
 		CompletableFuture.runAsync(() -> {
 			try (Scanner in = new Scanner(System.in)) {
 				in.nextLine();
-
-				// Closing the listener will cause it to stop accepting any more connections.
-				// However, it will not shutdown the connections that are already established and still running.
-				listener.close();
 			}
+			// Closing the listener will cause it to stop accepting any more connections.
+			// However, it will not shutdown the connections that are already established and still running.
+			listener.close();
 		});
 
 		while (listener.isOnline()) {
