@@ -37,6 +37,13 @@ namespace RoleBasedAccessControl
                 option = RbacAuthenticationOption.ManagedIdentity;
                 hostAddress = args[0];
                 hybridConnectionName = args[1];
+                
+                // Validate input arguments
+                if (string.IsNullOrWhiteSpace(hostAddress) || string.IsNullOrWhiteSpace(hybridConnectionName))
+                {
+                    Console.WriteLine("Error: Host address and hybrid connection name must be non-empty");
+                    return;
+                }
             }
             else if (args.Length == 3)
             {
@@ -44,6 +51,14 @@ namespace RoleBasedAccessControl
                 hostAddress = args[0];
                 hybridConnectionName = args[1];
                 clientId = args[2];
+                
+                // Validate input arguments
+                if (string.IsNullOrWhiteSpace(hostAddress) || string.IsNullOrWhiteSpace(hybridConnectionName) ||
+                    string.IsNullOrWhiteSpace(clientId))
+                {
+                    Console.WriteLine("Error: Host address, hybrid connection name, and client ID must be non-empty");
+                    return;
+                }
             }
             else if (args.Length == 5)
             {
@@ -53,6 +68,15 @@ namespace RoleBasedAccessControl
                 clientId = args[2];
                 tenantId = args[3];
                 clientSecret = args[4];
+                
+                // Validate input arguments
+                if (string.IsNullOrWhiteSpace(hostAddress) || string.IsNullOrWhiteSpace(hybridConnectionName) ||
+                    string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(tenantId) ||
+                    string.IsNullOrWhiteSpace(clientSecret))
+                {
+                    Console.WriteLine("Error: All arguments must be non-empty");
+                    return;
+                }
             }
             else
             {

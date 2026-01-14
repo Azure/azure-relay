@@ -26,6 +26,14 @@ namespace Server
             var keyname = args[2];
             var key = args[3];
 
+            // Validate input arguments
+            if (string.IsNullOrWhiteSpace(ns) || string.IsNullOrWhiteSpace(hc) ||
+                string.IsNullOrWhiteSpace(keyname) || string.IsNullOrWhiteSpace(key))
+            {
+                Console.WriteLine("Error: All arguments must be non-empty");
+                return;
+            }
+
             var tokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(keyname, key);
             var listener = new HybridConnectionListener(new Uri(string.Format("sb://{0}/{1}", ns, hc)), tokenProvider);
 

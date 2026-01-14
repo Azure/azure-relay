@@ -23,13 +23,14 @@ public class HttpSender {
 
 		URL url = buildHttpConnectionURL(connectionParams.getEndpoint().toString(), connectionParams.getEntityPath());
 		String tokenString = tokenProvider.getTokenAsync(url.toString(), Duration.ofHours(1)).join().getToken();
-		Scanner in = new Scanner(System.in);
 
-		while (true) {
-			System.out.println("Please enter the message you want to send over http, \"quit\" or \"q\" to terminate:");
-			String message = in.nextLine();
-			if (message.equalsIgnoreCase("quit") || message.equalsIgnoreCase("q"))
-				break;
+		// Use try-with-resources to ensure Scanner is properly closed
+		try (Scanner in = new Scanner(System.in)) {
+			while (true) {
+				System.out.println("Please enter the message you want to send over http, \"quit\" or \"q\" to terminate:");
+				String message = in.nextLine();
+				if (message.equalsIgnoreCase("quit") || message.equalsIgnoreCase("q"))
+					break;
 
 			// Starting a HTTP connection to the listener
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -59,7 +60,7 @@ public class HttpSender {
 				}
 				System.out.println("received back " + responseBuilder.toString());
 			} catch (IOException e) {
-				System.out.println("The listener is offline or could not be reached.");
+				System.err.println("The listener is offline or could not be reached: " + e.getMessage());
 				break;
 			} finally {
 				if (reader != null) {
@@ -67,8 +68,6 @@ public class HttpSender {
 				}
 			}
 		}
-
-		in.close();
 	}
 	
 	static URL buildHttpConnectionURL(String endpoint, String entity) throws MalformedURLException {
