@@ -27,18 +27,30 @@ namespace Client
             var keyname = args[2];
             var key = args[3];
 
+            // Validate input arguments
+            if (string.IsNullOrWhiteSpace(ns) || string.IsNullOrWhiteSpace(hc) ||
+                string.IsNullOrWhiteSpace(keyname) || string.IsNullOrWhiteSpace(key))
+            {
+                Console.WriteLine("Error: All arguments must be non-empty");
+                return;
+            }
+
             var tokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(keyname, key);
             var uri = new Uri(string.Format("https://{0}/{1}", ns, hc));
             var token = (await tokenProvider.GetTokenAsync(uri.AbsoluteUri, TimeSpan.FromHours(1))).TokenString;
-            var client = new HttpClient();
-            var request = new HttpRequestMessage()
+            
+            // Use 'using' statement to ensure proper disposal of HttpClient
+            using (var client = new HttpClient())
             {
-                RequestUri = uri,
-                Method = HttpMethod.Get,
-            };
-            request.Headers.Add("ServiceBusAuthorization", token);
-            var response = await client.SendAsync(request);
-            Console.WriteLine(await response.Content.ReadAsStringAsync());
+                var request = new HttpRequestMessage()
+                {
+                    RequestUri = uri,
+                    Method = HttpMethod.Get,
+                };
+                request.Headers.Add("ServiceBusAuthorization", token);
+                var response = await client.SendAsync(request);
+                Console.WriteLine(await response.Content.ReadAsStringAsync());
+            }
         }
     }
 }

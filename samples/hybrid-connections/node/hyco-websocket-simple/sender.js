@@ -1,11 +1,18 @@
 if (process.argv.length < 6) {
     console.log('sender.js [namespace] [path] [key-rule] [key]');
+    process.exit(1);
 } else {
 
     var ns = process.argv[2];
     var path = process.argv[3];
     var keyrule = process.argv[4];
     var key = process.argv[5];
+
+    // Validate input arguments
+    if (!ns || !path || !keyrule || !key) {
+        console.error('Error: All arguments must be non-empty');
+        process.exit(1);
+    }
 
     var WebSocket = require('hyco-websocket')
     var WebSocketClient = WebSocket.client
@@ -15,6 +22,11 @@ if (process.argv.length < 6) {
 
     var client = new WebSocketClient();
     client.connect(address, null, null, { 'ServiceBusAuthorization' : token});
+
+    client.on('connectFailed', function(error) {
+        console.error('Connection failed: ' + error.toString());
+        process.exit(1);
+    });
 
     client.on('connect', function(connection) {
         var id = setInterval(function() {

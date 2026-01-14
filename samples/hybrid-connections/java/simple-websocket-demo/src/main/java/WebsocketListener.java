@@ -23,14 +23,15 @@ public class WebsocketListener {
 		listener.openAsync().join();
 		System.out.println("Listener is online. Press ENTER to terminate this program.");
 
+		// Use try-with-resources to ensure Scanner is properly closed
 		CompletableFuture.runAsync(() -> {
-			Scanner in = new Scanner(System.in);
-			in.nextLine();
+			try (Scanner in = new Scanner(System.in)) {
+				in.nextLine();
 
-			// Closing the listener will cause it to stop accepting any more connections.
-			// However, it will not shutdown the connections that are already established and still running.
-			listener.close();
-			in.close();
+				// Closing the listener will cause it to stop accepting any more connections.
+				// However, it will not shutdown the connections that are already established and still running.
+				listener.close();
+			}
 		});
 
 		while (listener.isOnline()) {

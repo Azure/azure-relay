@@ -35,7 +35,8 @@ public class HttpListener {
 					}
 					receivedText = builder.toString();
 				} catch (IOException e) {
-					System.out.println(e.getMessage());
+					System.err.println("Error reading request: " + e.getMessage());
+					e.printStackTrace();
 				}
 			}
 			System.out.println("requestHandler received " + receivedText);
@@ -56,11 +57,12 @@ public class HttpListener {
 
 		listener.openAsync().join();
 
-		Scanner in = new Scanner(System.in);
-		System.out.println("Press ENTER to terminate this program.");
-		in.nextLine();
+		// Use try-with-resources to ensure Scanner is properly closed
+		try (Scanner in = new Scanner(System.in)) {
+			System.out.println("Press ENTER to terminate this program.");
+			in.nextLine();
+		}
 
 		listener.close();
-		in.close();
 	}
 }
