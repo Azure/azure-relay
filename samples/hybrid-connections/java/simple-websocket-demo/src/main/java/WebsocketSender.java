@@ -20,9 +20,9 @@ public class WebsocketSender {
 				new URI(connectionParams.getEndpoint().toString() + connectionParams.getEntityPath()),
 				tokenProvider);
 
-		Scanner in = new Scanner(System.in);
-
-		client.createConnectionAsync().thenAccept((connection) -> {
+		// Use try-with-resources to ensure Scanner is properly closed
+		try (Scanner in = new Scanner(System.in)) {
+			client.createConnectionAsync().thenAccept((connection) -> {
 			while (connection.isOpen()) {
 				System.out.println("Please enter the text you want to send, or enter \"quit\" or \"q\" to exit");
 				String input = in.nextLine();
@@ -43,7 +43,7 @@ public class WebsocketSender {
 			if (exception != null) {
 				exception.printStackTrace();
 			}
-			in.close();
 		});
+		}
 	}
 }

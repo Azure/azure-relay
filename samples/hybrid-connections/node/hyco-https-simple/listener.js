@@ -18,7 +18,14 @@ process.argv.forEach(function(value) {
 
 if (args.ns == null || args.path == null || args.keyrule == null || args.key == null) {
     console.log('listener.js --ns=[namespace] --path=[path] --keyrule=[keyrule] --key=[key]');
+    process.exit(1);
 } else {
+    // Validate that arguments are not empty strings
+    if (!args.ns || !args.path || !args.keyrule || !args.key) {
+        console.error('Error: All arguments must be non-empty');
+        process.exit(1);
+    }
+    
     var uri = https.createRelayListenUri(args.ns, args.path);
     var server = https.createRelayedServer(
         {
@@ -33,12 +40,12 @@ if (args.ns == null || args.path == null || args.keyrule == null || args.key == 
 
     server.listen( (err) => {
             if (err) {
-              return console.log('something bad happened', err)
+              return console.error('Server error:', err)
             }          
-            console.log(`server is listening on ${port}`)
+            console.log('server is listening')
           });
 
     server.on('error', (err) => {
-        console.log('error: ' + err);
+        console.error('Server error:', err);
     });
 }
