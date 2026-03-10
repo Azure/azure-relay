@@ -10,8 +10,8 @@ The [hybrid-connections](./hybrid-connections) folder contains samples that
 demonstrate the WebSocket and HTTP features of the open-protocol Hybrid
 Connections feature set.
 
-There are [Node.js](hybrid-connections/node/README.md) and
-[.NET](hybrid-connections/dotnet/README.md) samples, with further languages
+There are [.NET](hybrid-connections/dotnet/README.md), [Node.js](hybrid-connections/node/README.md), 
+and [Java](https://github.com/Azure/azure-relay-java) samples, with further languages
 forthcoming.
 
 ## WCF Relay
