@@ -140,7 +140,6 @@ namespace PortBridge
                         {
                             tcpConnection.NoDelay = true;
                             tcpConnection.LingerState.Enabled = false;
-                            Stream socketStream = tcpConnection.GetStream();
 
                             EnsureConnection();
 
