@@ -50,23 +50,39 @@ $config = & "$scriptDir\..\config\ReadConfig.ps1" $configFile
 ###########################################################
 # Add Azure Account
 ###########################################################
-$account = Get-AzureAccount
-if($account -eq $null)
-{
-    $account = Add-AzureAccount
-    if($account -eq $null)
-    {
-        Write-ErrorLog "Failed to add Azure Account." (Get-ScriptName) (Get-ScriptLineNumber)
-        throw "Failed to add Azure Account."
-    }
-}
-Write-SpecialLog ("Using Azure Account: " + $account.Name) (Get-ScriptName) (Get-ScriptLineNumber)
+$tenantId = $config["AZURE_TENANT_ID"]
+$connectParams = @{}
+if($tenantId) { $connectParams["TenantId"] = $tenantId }
 
-$subscriptions = Get-AzureSubscription
-$subName = ($subscriptions | ? { $_.SubscriptionName -eq $config["AZURE_SUBSCRIPTION_NAME"] } | Select-Object -First 1 ).SubscriptionName
+$context = Get-AzContext
+if($context -eq $null)
+{
+    $context = Connect-AzAccount @connectParams
+    if($context -eq $null)
+    {
+        Write-ErrorLog "Failed to connect to Azure Account." (Get-ScriptName) (Get-ScriptLineNumber)
+        throw "Failed to connect to Azure Account."
+    }
+    $context = Get-AzContext
+}
+elseif($tenantId -and $context.Tenant.Id -ne $tenantId)
+{
+    Write-InfoLog "Current context is for tenant $($context.Tenant.Id), switching to $tenantId" (Get-ScriptName) (Get-ScriptLineNumber)
+    $context = Connect-AzAccount @connectParams
+    $context = Get-AzContext
+}
+Write-SpecialLog ("Using Azure Account: " + $context.Account.Id) (Get-ScriptName) (Get-ScriptLineNumber)
+
+# Use the tenant from the current context if not explicitly configured
+if(-not $tenantId) { $tenantId = $context.Tenant.Id }
+$subscriptionParams = @{}
+if($tenantId) { $subscriptionParams["TenantId"] = $tenantId }
+
+$subscriptions = Get-AzSubscription @subscriptionParams
+$subName = ($subscriptions | ? { $_.Name -eq $config["AZURE_SUBSCRIPTION_NAME"] } | Select-Object -First 1 ).Name
 if($subName -eq $null)
 {
-    $subNames = $subscriptions | % { "`r`n" + $_.SubscriptionName + " - " + $_.SubscriptionId}
+    $subNames = $subscriptions | % { "`r`n" + $_.Name + " - " + $_.Id}
     Write-InfoLog ("Available Subscription Names (Name - Id):" + $subNames) (Get-ScriptName) (Get-ScriptLineNumber)
 
     $subName = Read-Host "Enter subscription name"
@@ -84,7 +100,9 @@ Write-SpecialLog "Current run configuration:" (Get-ScriptName) (Get-ScriptLineNu
 $config.Keys | sort | % { if(-not ($_.Contains("PASSWORD") -or $_.Contains("KEY"))) { Write-SpecialLog ("Key = " + $_ + ", Value = " + $config[$_]) (Get-ScriptName) (Get-ScriptLineNumber) } }
 
 Write-SpecialLog ("Using subscription: " + $config["AZURE_SUBSCRIPTION_NAME"]) (Get-ScriptName) (Get-ScriptLineNumber)
-Select-AzureSubscription -SubscriptionName $config["AZURE_SUBSCRIPTION_NAME"]
+$setContextParams = @{ SubscriptionName = $config["AZURE_SUBSCRIPTION_NAME"] }
+if($tenantId) { $setContextParams["Tenant"] = $tenantId }
+Set-AzContext @setContextParams
 
 ###########################################################
 # Check Azure Resource Creation List
@@ -93,6 +111,13 @@ Select-AzureSubscription -SubscriptionName $config["AZURE_SUBSCRIPTION_NAME"]
 
 $startTime = Get-Date
 
+###########################################################
+# Create Resource Group
+###########################################################
+$rgName = $config["AZURE_RESOURCE_GROUP"]
+$location = $config["AZURE_LOCATION"]
+Write-SpecialLog "Creating Resource Group: $rgName in $location" (Get-ScriptName) (Get-ScriptLineNumber)
+$null = New-AzResourceGroup -Name $rgName -Location $location -Force
 
 ###########################################################
 # Create Azure Resources
@@ -101,10 +126,12 @@ $startTime = Get-Date
 
 Write-SpecialLog "Creating ServiceBus Relay" (Get-ScriptName) (Get-ScriptLineNumber)
         
-Select-AzureSubscription -SubscriptionName $subName
+$setContextParams = @{ SubscriptionName = $subName }
+if($tenantId) { $setContextParams["Tenant"] = $tenantId }
+Set-AzContext @setContextParams
 & "$scriptDir\..\init.ps1"
 Write-InfoLog "Creating Relay" (Get-ScriptName) (Get-ScriptLineNumber)
-$sbKeys = & "$scriptDir\ServiceBus\CreateServiceBusRelay.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"] $config["AZURE_LOCATION"] 
+$sbKeys = & "$scriptDir\ServiceBus\CreateServiceBusRelay.ps1" $config["AZURE_RESOURCE_GROUP"] $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"] $config["AZURE_LOCATION"]
 if($sbKeys)
 {
     & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_SEND_KEY=$sbKeys["samplesend"]}

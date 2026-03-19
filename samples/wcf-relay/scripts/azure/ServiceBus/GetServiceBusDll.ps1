@@ -18,6 +18,17 @@ if(-not $?)
 ###########################################################
 
 $nugetExe = Join-Path $scriptDir "..\..\..\tools\nuget\nuget.exe"
+
+# Download nuget.exe if it is not present
+if(-not (Test-Path $nugetExe))
+{
+    $nugetDir = Split-Path $nugetExe
+    if(-not (Test-Path $nugetDir)) { New-Item -ItemType Directory -Path $nugetDir -Force | Out-Null }
+    Write-InfoLog "Downloading nuget.exe..." (Get-ScriptName) (Get-ScriptLineNumber)
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile $nugetExe
+}
+
 $install = & "$nugetExe" install WindowsAzure.ServiceBus -version 3.0 -OutputDirectory "$scriptDir\..\..\..\packages"
 
 $sbNuget = (gci "$scriptDir\..\..\..\packages\WindowsAzure.ServiceBus.*")[0].FullName

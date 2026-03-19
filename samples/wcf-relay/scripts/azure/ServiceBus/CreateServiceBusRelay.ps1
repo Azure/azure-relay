@@ -1,6 +1,8 @@
 [CmdletBinding(PositionalBinding=$True)]
 Param(
     [Parameter(Mandatory = $true)]
+    [String]$ResourceGroup,                          # required    Azure resource group name
+    [Parameter(Mandatory = $true)]
     [ValidatePattern("^[a-z0-9-]*$")]
     [String]$Namespace,                             # required    needs to be alphanumeric or '-'
     [Parameter(Mandatory = $true)]
@@ -8,8 +10,7 @@ Param(
     [String]$Path,                                  # required    needs to be alphanumeric or '-'
     [Parameter(Mandatory = $true)]                            
     [String]$Location = "West Europe",              # optional    default to "West Europe"
-    [String]$UserMetadata = $null,                  # optional    default to $null
-    [Bool]$CreateACSNamespace = $False              # optional    default to $false
+    [String]$UserMetadata = $null                   # optional    default to $null
     )
 
 
@@ -56,31 +57,44 @@ $ManageAccessRights = [Microsoft.ServiceBus.Messaging.AccessRights[]]([Microsoft
 
 
 # Create Azure Service Bus namespace
-$CurrentNamespace = Get-AzureSBNamespace -Name $Namespace
+$CurrentNamespace = $null
+try
+{
+    $CurrentNamespace = Get-AzServiceBusNamespace -ResourceGroupName $ResourceGroup -Name $Namespace -ErrorAction SilentlyContinue
+}
+catch
+{
+    # Namespace does not exist yet
+}
 
 # Check if the namespace already exists or needs to be created
 if ($CurrentNamespace)
 {
-    Write-InfoLog "The namespace: $Namespace already exists in location: $($CurrentNamespace.Region)" (Get-ScriptName) (Get-ScriptLineNumber)
+    Write-InfoLog "The namespace: $Namespace already exists in location: $($CurrentNamespace.Location)" (Get-ScriptName) (Get-ScriptLineNumber)
 }
 else
 {
     Write-InfoLog "The namespace: $Namespace does not exist." (Get-ScriptName) (Get-ScriptLineNumber)
     Write-InfoLog "Creating namespace: $Namespace in location: $Location" (Get-ScriptName) (Get-ScriptLineNumber)
-    $CurrentNamespace = New-AzureSBNamespace -Name $Namespace -Location $Location -CreateACSNamespace $CreateACSNamespace -NamespaceType Messaging
+    $CurrentNamespace = New-AzServiceBusNamespace -ResourceGroupName $ResourceGroup -Name $Namespace -Location $Location -SkuName Standard
     #introduce a delay so that the namespace info can be retrieved
     sleep -s 15
-    $CurrentNamespace = Get-AzureSBNamespace -Name $Namespace
+    $CurrentNamespace = Get-AzServiceBusNamespace -ResourceGroupName $ResourceGroup -Name $Namespace
     Write-InfoLog "The namespace: $Namespace in location: $Location has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
     
-    $null = New-AzureSBAuthorizationRule -Name "root$SendRuleName" -Namespace $Namespace -Permission $("Send") -PrimaryKey $SendKey
-    $null = New-AzureSBAuthorizationRule -Name "root$ListenRuleName" -Namespace $Namespace -Permission $("Listen") -PrimaryKey $ListenKey
-    $null = New-AzureSBAuthorizationRule -Name "root$ManageRuleName" -Namespace $Namespace -Permission $("Manage", "Listen","Send") -PrimaryKey $ManageKey
+    $null = New-AzServiceBusAuthorizationRule -ResourceGroupName $ResourceGroup -NamespaceName $Namespace -Name "root$SendRuleName" -Rights @("Send")
+    $null = New-AzServiceBusAuthorizationRule -ResourceGroupName $ResourceGroup -NamespaceName $Namespace -Name "root$ListenRuleName" -Rights @("Listen")
+    $null = New-AzServiceBusAuthorizationRule -ResourceGroupName $ResourceGroup -NamespaceName $Namespace -Name "root$ManageRuleName" -Rights @("Manage", "Listen", "Send")
 }
+
+# Get the connection string for the namespace
+Write-InfoLog "Retrieving connection string for the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
+$namespaceKeys = Get-AzServiceBusKey -ResourceGroupName $ResourceGroup -NamespaceName $Namespace -AuthorizationRuleName "RootManageSharedAccessKey"
+$connectionString = $namespaceKeys.PrimaryConnectionString
 
 # Create the NamespaceManager object to create the Relay
 Write-InfoLog "Creating a NamespaceManager object for the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
-$NamespaceManager = [Microsoft.ServiceBus.NamespaceManager]::CreateFromConnectionString($CurrentNamespace.ConnectionString);
+$NamespaceManager = [Microsoft.ServiceBus.NamespaceManager]::CreateFromConnectionString($connectionString);
 Write-InfoLog "NamespaceManager object for the namespace: $Namespace has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
 
 
