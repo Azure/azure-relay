@@ -45,8 +45,17 @@ $config = & "$scriptDir\..\config\ReadConfig.ps1" $configFile
 $config.Keys | sort | % { if(-not ($_.Contains("PASSWORD") -or $_.Contains("KEY"))) { Write-SpecialLog ("Key = " + $_ + ", Value = " + $config[$_]) (Get-ScriptName) (Get-ScriptLineNumber) } }
 
 $subName = $config["AZURE_SUBSCRIPTION_NAME"]
+$tenantId = $config["AZURE_TENANT_ID"]
+# Use the tenant from the current context if not explicitly configured
+if(-not $tenantId)
+{
+    $currentContext = Get-AzContext
+    if($currentContext) { $tenantId = $currentContext.Tenant.Id }
+}
 Write-SpecialLog "Using subscription '$subName'" (Get-ScriptName) (Get-ScriptLineNumber)
-Select-AzureSubscription -SubscriptionName $subName
+$setContextParams = @{ SubscriptionName = $subName }
+if($tenantId) { $setContextParams["Tenant"] = $tenantId }
+Set-AzContext @setContextParams
 
 #Changing Error Action to Continue here onwards to have maximum resource deletion
 $ErrorActionPreference = "Continue"
@@ -54,8 +63,23 @@ $ErrorActionPreference = "Continue"
 $success = $true
 
 Write-InfoLog "Deleting ServiceBus" (Get-ScriptName) (Get-ScriptLineNumber)
-& "$scriptDir\ServiceBus\DeleteServiceBusRelay.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"]
+& "$scriptDir\ServiceBus\DeleteServiceBusRelay.ps1" $config["AZURE_RESOURCE_GROUP"] $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"]
 $success = $success -and $?
+
+if($success -and $config["AZURE_RESOURCE_GROUP"])
+{
+    Write-InfoLog "Deleting Resource Group" (Get-ScriptName) (Get-ScriptLineNumber)
+    try
+    {
+        Remove-AzResourceGroup -Name $config["AZURE_RESOURCE_GROUP"] -Force
+        Write-InfoLog "Deleted Resource Group: $($config["AZURE_RESOURCE_GROUP"])" (Get-ScriptName) (Get-ScriptLineNumber)
+    }
+    catch
+    {
+        Write-ErrorLog "Failed to delete Resource Group: $($config["AZURE_RESOURCE_GROUP"])" (Get-ScriptName) (Get-ScriptLineNumber) $_
+        $success = $false
+    }
+}
 
 if($success)
 {

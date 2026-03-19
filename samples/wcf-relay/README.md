@@ -49,15 +49,15 @@ free community edition will work fine.
 
 To run the samples, you must perform a few setup steps, including creating and
 configuring a Service Bus Namespace. For the required [setup.ps1](setup.ps1)
-and [cleanup.ps1](cleanup.ps1) scripts, **you must have Azure Powershell
-installed** ([if you don't here's
-how](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/))
-and run these scripts from the Azure Powershell environment.
+and [cleanup.ps1](cleanup.ps1) scripts, **you must have the Az PowerShell
+module installed** ([if you don't here's
+how](https://learn.microsoft.com/powershell/azure/install-azure-powershell))
+and run these scripts from a PowerShell environment.
 
 ### Setup
 
 The [setup.ps1](setup.ps1) script will either use the account and subscription
-you have previously configured for your Azure Powershell environment or prompt
+you have previously configured for your Az PowerShell environment or prompt
 you to log in and, if you have multiple subscriptions associated with your
 account, select a subscription.
 

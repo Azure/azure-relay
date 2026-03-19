@@ -1,6 +1,8 @@
 [CmdletBinding(PositionalBinding=$True)]
 Param(
     [Parameter(Mandatory = $true)]
+    [String]$ResourceGroup,                          # required    Azure resource group name
+    [Parameter(Mandatory = $true)]
     [ValidatePattern("^[a-z0-9-]*$")]
     [String]$Namespace,                             # required    needs to be alphanumeric or '-'
     [Parameter(Mandatory = $true)]
@@ -29,7 +31,7 @@ if(-not $?)
 
 try
 {
-    $CurrentNamespace = Get-AzureSBNamespace -Name $Namespace
+    $CurrentNamespace = Get-AzServiceBusNamespace -ResourceGroupName $ResourceGroup -Name $Namespace -ErrorAction SilentlyContinue
 }
 catch
 {
@@ -41,8 +43,8 @@ if ($CurrentNamespace)
     Write-InfoLog "Deleting ServiceBus Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
     try
     {
-        Remove-AzureSBNamespace -Name $Namespace -Force
-        Write-InfoLog "Delete Azure Service Bus Namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
+        Remove-AzServiceBusNamespace -ResourceGroupName $ResourceGroup -Name $Namespace
+        Write-InfoLog "Deleted Azure Service Bus Namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
     }
     catch
     {
